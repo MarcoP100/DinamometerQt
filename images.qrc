@@ -1,0 +1,8 @@
+<!-- File: images.qrc -->
+
+<RCC>
+    <qresource prefix="/">
+        <file>images/dynamometer_with_improved_yellow_needle.png</file>
+        <file>images/gradient_background.png</file>
+    </qresource>
+</RCC>
