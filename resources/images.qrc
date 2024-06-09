@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>../images/gradient_background.png</file>
+        <file>../images/dynamometer_forTest.png</file>
+    </qresource>
+</RCC>
