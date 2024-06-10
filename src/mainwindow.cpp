@@ -13,10 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Impostare le dimensioni della finestra
     setFixedSize(800, 600);
-
-    // Rimuovere il titolo e i bordi della finestra
     setWindowFlags(Qt::FramelessWindowHint);
-
 
     QWidget *centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
@@ -31,14 +28,19 @@ MainWindow::MainWindow(QWidget *parent) :
     // Imposta le posizioni delle ghiere
     m_dynamometer->setPosition(100, 100); // Posizione della prima ghiera
 
+    // Imposta altri parametri delle ghiere
+    m_dynamometer->setMaxValue(60);
+    m_dynamometer->setTackCount(12);
+    m_dynamometer->setShowNeedle(true);
+
     // Simulazione aggiornamento valore
-    QTimer *timer = new QTimer(this);
+    /*QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [this]() {
         static int value = 0;
         value = (value + 1) % 100;
         m_dynamometer->setValue(value);
     });
-    timer->start(1000);
+    timer->start(1000);*/
 }
 
 MainWindow::~MainWindow() {
