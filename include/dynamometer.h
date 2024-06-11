@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QPixmap>
 
+namespace MyProject {
 class Dynamometer : public QWidget {
     Q_OBJECT
 
@@ -12,7 +13,8 @@ public:
     void setValue(int value);
     void setMaxValue(int maxValue);
     void setTackCount(int count);
-    void setShowNeedle(bool show);
+    void setShowNeedle(bool show); 
+    void setDiameter(int diameter);
     void setPosition(int x, int y);
 
 protected:
@@ -23,6 +25,7 @@ private:
     int m_maxValue;
     int m_tackCount;
     bool m_showNeedle;
+    int m_diameter; // raggio della ghiera. E' escluso l'eventuale anello esterno
     int m_x;
     int m_y;
 
@@ -35,5 +38,6 @@ private:
     void generateGaugeCache();
     void drawGradientBackground(QPainter &painter);
 };
+} // namespace MyProject
 
 #endif // DYNAMOMETER_H

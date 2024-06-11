@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+namespace MyProject {
+
 class BackgroundWidget : public QWidget {
     Q_OBJECT
 
@@ -15,6 +17,8 @@ protected:
 private:
     QPixmap m_background;
 };
+
+} // namespace MyProject
 
 #endif // BACKGROUNDWIDGET_H
 

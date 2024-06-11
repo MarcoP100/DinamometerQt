@@ -4,12 +4,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QWidget>
 #include "backgroundwidget.h"
 #include "dynamometer.h"
 
-namespace Ui {
-class MainWindow;
-}
+
+namespace MyProject {
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -19,9 +19,12 @@ public:
     ~MainWindow();
 
 private:
-    BackgroundWidget *m_backgroundWidget;
-    Dynamometer *m_dynamometer;
+    MyProject::BackgroundWidget *m_backgroundWidget;
+    MyProject::Dynamometer *m_dynamometer;
+    void setupUi();
 };
+
+}
 
 #endif // MAINWINDOW_H
 

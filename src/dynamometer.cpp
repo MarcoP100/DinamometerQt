@@ -1,14 +1,17 @@
 #include "dynamometer.h"
 #include <QPainter>
 #include <QPaintEvent>
-#include <QConicalGradient>
+#include <QRadialGradient>
+#include <QColor>
 
+namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
     QWidget(parent),
     m_value(0),
     m_maxValue(50),
     m_tackCount(10),
     m_showNeedle(true),
+    m_diameter(0),
     m_x(0),
     m_y(0),
     m_cacheDirty(true) {} // Initialize m_cacheDirty to true
@@ -32,6 +35,12 @@ void Dynamometer::setTackCount(int count) {
     update();
 }
 
+void Dynamometer::setDiameter(int diameter) {
+    m_diameter = diameter;
+    m_cacheDirty = true;
+    update();
+}
+
 void Dynamometer::setShowNeedle(bool show) {
     m_showNeedle = show;
     update();
@@ -43,23 +52,24 @@ void Dynamometer::setPosition(int x, int y) {
     update();
 }
 
+
 void Dynamometer::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
 
-        QPainter painter(this);
+    QPainter painter(this);
 
-        if (m_cacheDirty) {
-            generateGaugeCache();
-            m_cacheDirty = false;
-        }
+    if (m_cacheDirty) {
+        generateGaugeCache();
+        m_cacheDirty = false;
+    }
 
-        // Disegna la cache della ghiera centrata nel widget
-        int x = (width() - m_gaugeCache.width()) / 2;
-        int y = (height() - m_gaugeCache.height()) / 2;
-        painter.drawPixmap(0, 0, m_gaugeCache);
+    // Disegna la cache della ghiera centrata nel widget
+    //int x = (width() - m_gaugeCache.width()) / 2;
+    //int y = (height() - m_gaugeCache.height()) / 2;
+    painter.drawPixmap(m_x, m_y, m_gaugeCache);
 
-        // Disegna la lancetta se necessario
-        /*if (m_showNeedle) {
+    // Disegna la lancetta se necessario
+    /*if (m_showNeedle) {
             drawNeedle(painter);
         }*/
 }
@@ -73,7 +83,7 @@ void Dynamometer::generateGaugeCache() {
     // Disegna la sfumatura di sfondo
     drawGradientBackground(painter);
 
-     // Disegna la ghiera
+    // Disegna la ghiera
     //drawGauge(painter);
 
     // Disegna le tacche
@@ -81,21 +91,27 @@ void Dynamometer::generateGaugeCache() {
 }
 
 void Dynamometer::drawGradientBackground(QPainter &painter) {
-    QConicalGradient gradient(rect().center(), -90);
 
-        // Aggiungiamo più colori per una sfumatura più dettagliata
-        gradient.setColorAt(0.0, QColor(128, 179, 255));
-        gradient.setColorAt(0.25, QColor(102, 153, 255));
-        gradient.setColorAt(0.5, QColor(77, 128, 255));
-        gradient.setColorAt(0.75, QColor(51, 102, 255));
-        gradient.setColorAt(1.0, QColor(26, 77, 255));
+    // Centro del gradiente
+    QPointF center(width() / 2, height() / 2);
 
-        painter.setBrush(QBrush(gradient));
-        painter.setPen(Qt::NoPen);
+    // Raggio del gradiente
+    qreal radius = m_diameter / 2;
 
-        int diameter = qMin(width(), height());
-        QRect gradientRect((width() - diameter) / 2, (height() - diameter) / 2, diameter, diameter);
-        painter.drawEllipse(gradientRect);
+    QRadialGradient  gradient(center, radius);
+
+    // Aggiungiamo più colori per una sfumatura più dettagliata
+    gradient.setColorAt(0.0, QColor(128, 179, 255));
+    gradient.setColorAt(0.25, QColor(102, 153, 255));
+    gradient.setColorAt(0.5, QColor(77, 128, 255));
+    gradient.setColorAt(0.75, QColor(51, 102, 255));
+    gradient.setColorAt(1.0, QColor(26, 77, 255));
+
+    painter.setBrush(QBrush(gradient));
+    painter.setPen(Qt::NoPen);
+
+    QRect gradientRect((width() - m_diameter) / 2, (height() - m_diameter) / 2, m_diameter, m_diameter);
+    painter.drawEllipse(gradientRect);
 }
 
 void Dynamometer::drawGauge(QPainter &painter) {
@@ -136,4 +152,5 @@ void Dynamometer::drawTacks(QPainter &painter) {
         painter.rotate(360.0 / m_tackCount);
     }
     painter.restore();
+}
 }

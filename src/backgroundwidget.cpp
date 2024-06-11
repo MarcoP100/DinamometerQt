@@ -3,6 +3,8 @@
 #include <QPixmap>
 #include <QDebug>
 
+namespace MyProject {
+
 BackgroundWidget::BackgroundWidget(QWidget *parent) :
     QWidget(parent),
     m_background(":/images/gradient_background.png") {}
@@ -14,3 +16,5 @@ void BackgroundWidget::paintEvent(QPaintEvent *event) {
     QPixmap scaledBackground = m_background.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
     painter.drawPixmap(rect(), scaledBackground);
 }
+
+} // namespace MyProject

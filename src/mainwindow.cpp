@@ -6,11 +6,18 @@
 #include <QGridLayout>
 #include <QTimer>
 
+namespace MyProject {
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    m_backgroundWidget(new BackgroundWidget(this)),
-    m_dynamometer(new Dynamometer(this)) {
+    m_backgroundWidget(new MyProject::BackgroundWidget(this)),
+    m_dynamometer(new MyProject::Dynamometer(this)) {
 
+        setupUi();
+      }
+
+void MainWindow::setupUi() {
     // Impostare le dimensioni della finestra
     setFixedSize(800, 600);
     setWindowFlags(Qt::FramelessWindowHint);
@@ -25,8 +32,11 @@ MainWindow::MainWindow(QWidget *parent) :
     gridLayout->addWidget(m_backgroundWidget, 0, 0);
     gridLayout->addWidget(m_dynamometer, 0, 0);
 
+    // imposta il diamero del dinamometro
+    m_dynamometer->setDiameter(350);
+
     // Imposta le posizioni delle ghiere
-    m_dynamometer->setPosition(100, 100); // Posizione della prima ghiera
+    m_dynamometer->setPosition(100, 100);
 
     // Imposta altri parametri delle ghiere
     m_dynamometer->setMaxValue(60);
@@ -45,3 +55,5 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow() {
 }
+
+} // namespace MyProject
