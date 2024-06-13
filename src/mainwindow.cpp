@@ -1,39 +1,31 @@
-// File: src/mainwindow.cpp
-
-#include "../include/mainwindow.h"
+#include "mainwindow.h"
 #include "backgroundwidget.h"
 #include "dynamometer.h"
 #include <QGridLayout>
 #include <QTimer>
+#include <QStackedWidget>
 
 namespace MyProject {
 
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    m_backgroundWidget(new MyProject::BackgroundWidget(this)),
-    m_dynamometer(new MyProject::Dynamometer(this)) {
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , stackedWidget(new QStackedWidget(this)) {
 
-        setupUi();
-      }
-
-void MainWindow::setupUi() {
     // Impostare le dimensioni della finestra
     setFixedSize(800, 600);
     setWindowFlags(Qt::FramelessWindowHint);
 
-    QWidget *centralWidget = new QWidget(this);
-    setCentralWidget(centralWidget);
+    // Pagina 1 con Dynamometer
+    m_backgroundWidget1 = new BackgroundWidget(stackedWidget);
+    m_backgroundWidget1->setUseSvg(false);
 
-    // Usa QGridLayout per sovrapporre i widget
-    QGridLayout *gridLayout = new QGridLayout(centralWidget);
-    gridLayout->setMargin(0);
-    gridLayout->setSpacing(0);
-    gridLayout->addWidget(m_backgroundWidget, 0, 0);
-    gridLayout->addWidget(m_dynamometer, 0, 0);
+    m_dynamometer = new Dynamometer(m_backgroundWidget1);
+    m_dynamometer->setGeometry(0, 0, 400, 400); // Posiziona Dynamometer
+    stackedWidget->addWidget(m_backgroundWidget1);
 
     // imposta il diamero del dinamometro
-    m_dynamometer->setDiameter(350);
+    m_dynamometer->setDiameter(200);
 
     // Imposta le posizioni delle ghiere
     m_dynamometer->setPosition(100, 100);
@@ -42,6 +34,10 @@ void MainWindow::setupUi() {
     m_dynamometer->setMaxValue(60);
     m_dynamometer->setTackCount(12);
     m_dynamometer->setShowNeedle(true);
+
+    setCentralWidget(stackedWidget);
+
+
 
     // Simulazione aggiornamento valore
     /*QTimer *timer = new QTimer(this);

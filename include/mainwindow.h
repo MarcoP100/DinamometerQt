@@ -4,7 +4,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QWidget>
+#include <QStackedWidget>
 #include "backgroundwidget.h"
 #include "dynamometer.h"
 
@@ -19,9 +19,10 @@ public:
     ~MainWindow();
 
 private:
-    MyProject::BackgroundWidget *m_backgroundWidget;
+    QStackedWidget *stackedWidget;
+    MyProject::BackgroundWidget *m_backgroundWidget1;
     MyProject::Dynamometer *m_dynamometer;
-    void setupUi();
+
 };
 
 }

@@ -1,0 +1,1260 @@
+commit 0537e3e8c39a350fd3acec28fccc56f1853607a9
+Author: MARCOP100 <ss100gohan@gmail.com>
+Date:   Tue Jun 11 19:37:33 2024 +0200
+
+    Gradiente corretto e diametro
+
+diff --git a/include/backgroundwidget.h b/include/backgroundwidget.h
+index 205945d..37a96c3 100644
+--- a/include/backgroundwidget.h
++++ b/include/backgroundwidget.h
+@@ -3,6 +3,8 @@
+ 
+ #include <QWidget>
+ 
++namespace MyProject {
++
+ class BackgroundWidget : public QWidget {
+     Q_OBJECT
+ 
+@@ -16,5 +18,7 @@ private:
+     QPixmap m_background;
+ };
+ 
++} // namespace MyProject
++
+ #endif // BACKGROUNDWIDGET_H
+ 
+diff --git a/include/dynamometer.h b/include/dynamometer.h
+index 0676d3d..b44535f 100644
+--- a/include/dynamometer.h
++++ b/include/dynamometer.h
+@@ -4,6 +4,7 @@
+ #include <QWidget>
+ #include <QPixmap>
+ 
++namespace MyProject {
+ class Dynamometer : public QWidget {
+     Q_OBJECT
+ 
+@@ -12,7 +13,8 @@ public:
+     void setValue(int value);
+     void setMaxValue(int maxValue);
+     void setTackCount(int count);
+-    void setShowNeedle(bool show);
++    void setShowNeedle(bool show); 
++    void setDiameter(int diameter);
+     void setPosition(int x, int y);
+ 
+ protected:
+@@ -23,6 +25,7 @@ private:
+     int m_maxValue;
+     int m_tackCount;
+     bool m_showNeedle;
++    int m_diameter; // raggio della ghiera. E' escluso l'eventuale anello esterno
+     int m_x;
+     int m_y;
+ 
+@@ -35,5 +38,6 @@ private:
+     void generateGaugeCache();
+     void drawGradientBackground(QPainter &painter);
+ };
++} // namespace MyProject
+ 
+ #endif // DYNAMOMETER_H
+diff --git a/include/mainwindow.h b/include/mainwindow.h
+index 8b006b5..765f17f 100644
+--- a/include/mainwindow.h
++++ b/include/mainwindow.h
+@@ -4,12 +4,12 @@
+ #define MAINWINDOW_H
+ 
+ #include <QMainWindow>
++#include <QWidget>
+ #include "backgroundwidget.h"
+ #include "dynamometer.h"
+ 
+-namespace Ui {
+-class MainWindow;
+-}
++
++namespace MyProject {
+ 
+ class MainWindow : public QMainWindow {
+     Q_OBJECT
+@@ -19,9 +19,12 @@ public:
+     ~MainWindow();
+ 
+ private:
+-    BackgroundWidget *m_backgroundWidget;
+-    Dynamometer *m_dynamometer;
++    MyProject::BackgroundWidget *m_backgroundWidget;
++    MyProject::Dynamometer *m_dynamometer;
++    void setupUi();
+ };
+ 
++}
++
+ #endif // MAINWINDOW_H
+ 
+diff --git a/src/backgroundwidget.cpp b/src/backgroundwidget.cpp
+index 2334903..ddb5a37 100644
+--- a/src/backgroundwidget.cpp
++++ b/src/backgroundwidget.cpp
+@@ -3,6 +3,8 @@
+ #include <QPixmap>
+ #include <QDebug>
+ 
++namespace MyProject {
++
+ BackgroundWidget::BackgroundWidget(QWidget *parent) :
+     QWidget(parent),
+     m_background(":/images/gradient_background.png") {}
+@@ -14,3 +16,5 @@ void BackgroundWidget::paintEvent(QPaintEvent *event) {
+     QPixmap scaledBackground = m_background.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+     painter.drawPixmap(rect(), scaledBackground);
+ }
++
++} // namespace MyProject
+diff --git a/src/dynamometer.cpp b/src/dynamometer.cpp
+index a5fcce3..03a776b 100644
+--- a/src/dynamometer.cpp
++++ b/src/dynamometer.cpp
+@@ -1,14 +1,17 @@
+ #include "dynamometer.h"
+ #include <QPainter>
+ #include <QPaintEvent>
+-#include <QConicalGradient>
++#include <QRadialGradient>
++#include <QColor>
+ 
++namespace MyProject {
+ Dynamometer::Dynamometer(QWidget *parent) :
+     QWidget(parent),
+     m_value(0),
+     m_maxValue(50),
+     m_tackCount(10),
+     m_showNeedle(true),
++    m_diameter(0),
+     m_x(0),
+     m_y(0),
+     m_cacheDirty(true) {} // Initialize m_cacheDirty to true
+@@ -32,6 +35,12 @@ void Dynamometer::setTackCount(int count) {
+     update();
+ }
+ 
++void Dynamometer::setDiameter(int diameter) {
++    m_diameter = diameter;
++    m_cacheDirty = true;
++    update();
++}
++
+ void Dynamometer::setShowNeedle(bool show) {
+     m_showNeedle = show;
+     update();
+@@ -43,23 +52,24 @@ void Dynamometer::setPosition(int x, int y) {
+     update();
+ }
+ 
++
+ void Dynamometer::paintEvent(QPaintEvent *event) {
+     Q_UNUSED(event);
+ 
+-        QPainter painter(this);
++    QPainter painter(this);
+ 
+-        if (m_cacheDirty) {
+-            generateGaugeCache();
+-            m_cacheDirty = false;
+-        }
++    if (m_cacheDirty) {
++        generateGaugeCache();
++        m_cacheDirty = false;
++    }
+ 
+-        // Disegna la cache della ghiera centrata nel widget
+-        int x = (width() - m_gaugeCache.width()) / 2;
+-        int y = (height() - m_gaugeCache.height()) / 2;
+-        painter.drawPixmap(0, 0, m_gaugeCache);
++    // Disegna la cache della ghiera centrata nel widget
++    //int x = (width() - m_gaugeCache.width()) / 2;
++    //int y = (height() - m_gaugeCache.height()) / 2;
++    painter.drawPixmap(m_x, m_y, m_gaugeCache);
+ 
+-        // Disegna la lancetta se necessario
+-        /*if (m_showNeedle) {
++    // Disegna la lancetta se necessario
++    /*if (m_showNeedle) {
+             drawNeedle(painter);
+         }*/
+ }
+@@ -73,7 +83,7 @@ void Dynamometer::generateGaugeCache() {
+     // Disegna la sfumatura di sfondo
+     drawGradientBackground(painter);
+ 
+-     // Disegna la ghiera
++    // Disegna la ghiera
+     //drawGauge(painter);
+ 
+     // Disegna le tacche
+@@ -81,21 +91,27 @@ void Dynamometer::generateGaugeCache() {
+ }
+ 
+ void Dynamometer::drawGradientBackground(QPainter &painter) {
+-    QConicalGradient gradient(rect().center(), -90);
+ 
+-        // Aggiungiamo più colori per una sfumatura più dettagliata
+-        gradient.setColorAt(0.0, QColor(128, 179, 255));
+-        gradient.setColorAt(0.25, QColor(102, 153, 255));
+-        gradient.setColorAt(0.5, QColor(77, 128, 255));
+-        gradient.setColorAt(0.75, QColor(51, 102, 255));
+-        gradient.setColorAt(1.0, QColor(26, 77, 255));
++    // Centro del gradiente
++    QPointF center(width() / 2, height() / 2);
++
++    // Raggio del gradiente
++    qreal radius = m_diameter / 2;
++
++    QRadialGradient  gradient(center, radius);
+ 
+-        painter.setBrush(QBrush(gradient));
+-        painter.setPen(Qt::NoPen);
++    // Aggiungiamo più colori per una sfumatura più dettagliata
++    gradient.setColorAt(0.0, QColor(128, 179, 255));
++    gradient.setColorAt(0.25, QColor(102, 153, 255));
++    gradient.setColorAt(0.5, QColor(77, 128, 255));
++    gradient.setColorAt(0.75, QColor(51, 102, 255));
++    gradient.setColorAt(1.0, QColor(26, 77, 255));
+ 
+-        int diameter = qMin(width(), height());
+-        QRect gradientRect((width() - diameter) / 2, (height() - diameter) / 2, diameter, diameter);
+-        painter.drawEllipse(gradientRect);
++    painter.setBrush(QBrush(gradient));
++    painter.setPen(Qt::NoPen);
++
++    QRect gradientRect((width() - m_diameter) / 2, (height() - m_diameter) / 2, m_diameter, m_diameter);
++    painter.drawEllipse(gradientRect);
+ }
+ 
+ void Dynamometer::drawGauge(QPainter &painter) {
+@@ -137,3 +153,4 @@ void Dynamometer::drawTacks(QPainter &painter) {
+     }
+     painter.restore();
+ }
++}
+diff --git a/src/main.cpp b/src/main.cpp
+index 7e512c5..aea8bdf 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -3,9 +3,12 @@
+ #include <QApplication>
+ #include "../include/mainwindow.h"
+ 
++
+ int main(int argc, char *argv[]) {
+     QApplication app(argc, argv);
+-    MainWindow w;
+-    w.show();
++
++    MyProject::MainWindow mainWindow;
++    mainWindow.show();
++
+     return app.exec();
+ }
+diff --git a/src/mainwindow.cpp b/src/mainwindow.cpp
+index da84cd7..b2d8c72 100644
+--- a/src/mainwindow.cpp
++++ b/src/mainwindow.cpp
+@@ -6,11 +6,18 @@
+ #include <QGridLayout>
+ #include <QTimer>
+ 
++namespace MyProject {
++
++
+ MainWindow::MainWindow(QWidget *parent) :
+     QMainWindow(parent),
+-    m_backgroundWidget(new BackgroundWidget(this)),
+-    m_dynamometer(new Dynamometer(this)) {
++    m_backgroundWidget(new MyProject::BackgroundWidget(this)),
++    m_dynamometer(new MyProject::Dynamometer(this)) {
++
++        setupUi();
++      }
+ 
++void MainWindow::setupUi() {
+     // Impostare le dimensioni della finestra
+     setFixedSize(800, 600);
+     setWindowFlags(Qt::FramelessWindowHint);
+@@ -25,8 +32,11 @@ MainWindow::MainWindow(QWidget *parent) :
+     gridLayout->addWidget(m_backgroundWidget, 0, 0);
+     gridLayout->addWidget(m_dynamometer, 0, 0);
+ 
++    // imposta il diamero del dinamometro
++    m_dynamometer->setDiameter(350);
++
+     // Imposta le posizioni delle ghiere
+-    m_dynamometer->setPosition(100, 100); // Posizione della prima ghiera
++    m_dynamometer->setPosition(100, 100);
+ 
+     // Imposta altri parametri delle ghiere
+     m_dynamometer->setMaxValue(60);
+@@ -45,3 +55,5 @@ MainWindow::MainWindow(QWidget *parent) :
+ 
+ MainWindow::~MainWindow() {
+ }
++
++} // namespace MyProject
+
+commit 7d8ea435a258e777738d32a56b6bb867d05690e0
+Author: MARCOP100 <ss100gohan@gmail.com>
+Date:   Mon Jun 10 20:07:40 2024 +0200
+
+    Costruzione ghiera
+
+diff --git a/include/dynamometer.h b/include/dynamometer.h
+index 9af63c0..0676d3d 100644
+--- a/include/dynamometer.h
++++ b/include/dynamometer.h
+@@ -1,9 +1,8 @@
+-// File: include/dynamometer.h
+-
+ #ifndef DYNAMOMETER_H
+ #define DYNAMOMETER_H
+ 
+ #include <QWidget>
++#include <QPixmap>
+ 
+ class Dynamometer : public QWidget {
+     Q_OBJECT
+@@ -11,19 +10,30 @@ class Dynamometer : public QWidget {
+ public:
+     explicit Dynamometer(QWidget *parent = nullptr);
+     void setValue(int value);
++    void setMaxValue(int maxValue);
++    void setTackCount(int count);
++    void setShowNeedle(bool show);
+     void setPosition(int x, int y);
+-    QPoint getPosition() const;
+ 
+ protected:
+     void paintEvent(QPaintEvent *event) override;
+ 
+ private:
+     int m_value;
++    int m_maxValue;
++    int m_tackCount;
++    bool m_showNeedle;
+     int m_x;
+     int m_y;
+-    QPixmap m_gauge;
++
++    QPixmap m_gaugeCache;
++    bool m_cacheDirty;
+ 
+     void drawGauge(QPainter &painter);
++    void drawNeedle(QPainter &painter);
++    void drawTacks(QPainter &painter);
++    void generateGaugeCache();
++    void drawGradientBackground(QPainter &painter);
+ };
+ 
+ #endif // DYNAMOMETER_H
+diff --git a/src/dynamometer.cpp b/src/dynamometer.cpp
+index c95618e..a5fcce3 100644
+--- a/src/dynamometer.cpp
++++ b/src/dynamometer.cpp
+@@ -1,16 +1,17 @@
+-// File: src/dynamometer.cpp
+-
+ #include "dynamometer.h"
+ #include <QPainter>
+-#include <QPixmap>
+-#include <QDebug>
++#include <QPaintEvent>
++#include <QConicalGradient>
+ 
+ Dynamometer::Dynamometer(QWidget *parent) :
+     QWidget(parent),
+     m_value(0),
++    m_maxValue(50),
++    m_tackCount(10),
++    m_showNeedle(true),
+     m_x(0),
+     m_y(0),
+-    m_gauge(":/images/dynamometer_forTest.png") {}
++    m_cacheDirty(true) {} // Initialize m_cacheDirty to true
+ 
+ void Dynamometer::setValue(int value) {
+     if (value != m_value) {
+@@ -19,23 +20,120 @@ void Dynamometer::setValue(int value) {
+     }
+ }
+ 
++void Dynamometer::setMaxValue(int maxValue) {
++    m_maxValue = maxValue;
++    m_cacheDirty = true;
++    update();
++}
++
++void Dynamometer::setTackCount(int count) {
++    m_tackCount = count;
++    m_cacheDirty = true;
++    update();
++}
++
++void Dynamometer::setShowNeedle(bool show) {
++    m_showNeedle = show;
++    update();
++}
++
+ void Dynamometer::setPosition(int x, int y) {
+     m_x = x;
+     m_y = y;
+     update();
+ }
+ 
+-QPoint Dynamometer::getPosition() const {
+-    return QPoint(m_x, m_y);
+-}
+-
+ void Dynamometer::paintEvent(QPaintEvent *event) {
+     Q_UNUSED(event);
+ 
+-    QPainter painter(this);
++        QPainter painter(this);
++
++        if (m_cacheDirty) {
++            generateGaugeCache();
++            m_cacheDirty = false;
++        }
+ 
+-    // Usa le coordinate specificate per disegnare l'immagine
+-    painter.drawPixmap(m_x, m_y, m_gauge);
++        // Disegna la cache della ghiera centrata nel widget
++        int x = (width() - m_gaugeCache.width()) / 2;
++        int y = (height() - m_gaugeCache.height()) / 2;
++        painter.drawPixmap(0, 0, m_gaugeCache);
+ 
++        // Disegna la lancetta se necessario
++        /*if (m_showNeedle) {
++            drawNeedle(painter);
++        }*/
+ }
+ 
++void Dynamometer::generateGaugeCache() {
++    m_gaugeCache = QPixmap(size());
++    m_gaugeCache.fill(Qt::transparent); // Rende la cache trasparente
++
++    QPainter painter(&m_gaugeCache);
++
++    // Disegna la sfumatura di sfondo
++    drawGradientBackground(painter);
++
++     // Disegna la ghiera
++    //drawGauge(painter);
++
++    // Disegna le tacche
++    //drawTacks(painter);
++}
++
++void Dynamometer::drawGradientBackground(QPainter &painter) {
++    QConicalGradient gradient(rect().center(), -90);
++
++        // Aggiungiamo più colori per una sfumatura più dettagliata
++        gradient.setColorAt(0.0, QColor(128, 179, 255));
++        gradient.setColorAt(0.25, QColor(102, 153, 255));
++        gradient.setColorAt(0.5, QColor(77, 128, 255));
++        gradient.setColorAt(0.75, QColor(51, 102, 255));
++        gradient.setColorAt(1.0, QColor(26, 77, 255));
++
++        painter.setBrush(QBrush(gradient));
++        painter.setPen(Qt::NoPen);
++
++        int diameter = qMin(width(), height());
++        QRect gradientRect((width() - diameter) / 2, (height() - diameter) / 2, diameter, diameter);
++        painter.drawEllipse(gradientRect);
++}
++
++void Dynamometer::drawGauge(QPainter &painter) {
++    painter.setBrush(Qt::NoBrush);
++    painter.setPen(QPen(Qt::white, 4));
++    int diameter = qMin(width(), height()) - 40;
++    QRect gaugeRect((width() - diameter) / 2, (height() - diameter) / 2, diameter, diameter);
++    painter.drawEllipse(gaugeRect);
++}
++
++void Dynamometer::drawNeedle(QPainter &painter) {
++    painter.save();
++
++    int side = qMin(width(), height());
++    int x = width() / 2;
++    int y = height() / 2;
++
++    painter.translate(x, y);
++    painter.rotate(180.0 * m_value / m_maxValue);
++    painter.setBrush(Qt::yellow);
++
++    static const QPoint needle[3] = {
++        QPoint(0, -10),
++        QPoint(5, 0),
++        QPoint(0, side / 2 - 10)
++    };
++    painter.drawConvexPolygon(needle, 3);
++    painter.restore();
++}
++
++void Dynamometer::drawTacks(QPainter &painter) {
++    painter.save();
++    int side = qMin(width(), height());
++    painter.translate(width() / 2 + m_x, height() / 2 + m_y);
++    painter.setPen(QPen(Qt::white, 2));
++    for (int i = 0; i < m_tackCount; ++i) {
++        painter.drawLine(0, -side / 2 + 10, 0, -side / 2 + 20);
++        painter.rotate(360.0 / m_tackCount);
++    }
++    painter.restore();
++}
+diff --git a/src/mainwindow.cpp b/src/mainwindow.cpp
+index 8553e93..da84cd7 100644
+--- a/src/mainwindow.cpp
++++ b/src/mainwindow.cpp
+@@ -13,11 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
+ 
+     // Impostare le dimensioni della finestra
+     setFixedSize(800, 600);
+-
+-    // Rimuovere il titolo e i bordi della finestra
+     setWindowFlags(Qt::FramelessWindowHint);
+ 
+-
+     QWidget *centralWidget = new QWidget(this);
+     setCentralWidget(centralWidget);
+ 
+@@ -31,14 +28,19 @@ MainWindow::MainWindow(QWidget *parent) :
+     // Imposta le posizioni delle ghiere
+     m_dynamometer->setPosition(100, 100); // Posizione della prima ghiera
+ 
++    // Imposta altri parametri delle ghiere
++    m_dynamometer->setMaxValue(60);
++    m_dynamometer->setTackCount(12);
++    m_dynamometer->setShowNeedle(true);
++
+     // Simulazione aggiornamento valore
+-    QTimer *timer = new QTimer(this);
++    /*QTimer *timer = new QTimer(this);
+     connect(timer, &QTimer::timeout, [this]() {
+         static int value = 0;
+         value = (value + 1) % 100;
+         m_dynamometer->setValue(value);
+     });
+-    timer->start(1000);
++    timer->start(1000);*/
+ }
+ 
+ MainWindow::~MainWindow() {
+
+commit bf7a3df004f87205845b9584c86c7fa00487f298
+Author: MARCOP100 <ss100gohan@gmail.com>
+Date:   Sun Jun 9 20:38:29 2024 +0200
+
+    Ultimo salvataggio prima di cambiare e usare cpp invece di png
+
+diff --git a/DinamometerQt.pro b/DinamometerQt.pro
+index 842c652..0eef05d 100644
+--- a/DinamometerQt.pro
++++ b/DinamometerQt.pro
+@@ -1,5 +1,3 @@
+-# File: DinamometerQt.pro
+-
+ QT += core gui
+ 
+ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+@@ -8,17 +6,14 @@ TARGET = DinamometerQt
+ TEMPLATE = app
+ 
+ SOURCES += src/main.cpp \
+-           src/mainwindow.cpp
+-
+-HEADERS += include/mainwindow.h
++           src/backgroundwidget.cpp \
++           src/mainwindow.cpp \
++           src/dynamometer.cpp
+ 
+-FORMS += src/mainwindow.ui \
+-    src/mainwindow.ui
++HEADERS += include/mainwindow.h \
++           include/backgroundwidget.h \
++           include/dynamometer.h
+ 
+-# Directory per le immagini
+-RESOURCES += images.qrc
++RESOURCES += resources/images.qrc
+ 
+-# Default rules for deployment.
+-#qnx: target.path = /tmp/$${TARGET}/bin
+-#else: unix:!android: target.path = /opt/$${TARGET}/bin
+-#!isEmpty(target.path): INSTALLS += target
++INCLUDEPATH += include
+diff --git a/images.qrc b/images.qrc
+deleted file mode 100644
+index b28bb8e..0000000
+--- a/images.qrc
++++ /dev/null
+@@ -1,8 +0,0 @@
+-<!-- File: images.qrc -->
+-
+-<RCC>
+-    <qresource prefix="/">
+-        <file>images/dynamometer_with_improved_yellow_needle.png</file>
+-        <file>images/gradient_background.png</file>
+-    </qresource>
+-</RCC>
+diff --git a/images/dynamometer_forTest.png b/images/dynamometer_forTest.png
+new file mode 100644
+index 0000000..d28a89d
+Binary files /dev/null and b/images/dynamometer_forTest.png differ
+diff --git a/images/dynamometer_with_improved_yellow_needle.png b/images/dynamometer_with_improved_yellow_needle.png
+deleted file mode 100755
+index 426b41a..0000000
+Binary files a/images/dynamometer_with_improved_yellow_needle.png and /dev/null differ
+diff --git a/images/gradient_background.png b/images/gradient_background.png
+old mode 100755
+new mode 100644
+index 974008a..456bd64
+Binary files a/images/gradient_background.png and b/images/gradient_background.png differ
+diff --git a/include/backgroundwidget.h b/include/backgroundwidget.h
+new file mode 100644
+index 0000000..205945d
+--- /dev/null
++++ b/include/backgroundwidget.h
+@@ -0,0 +1,20 @@
++#ifndef BACKGROUNDWIDGET_H
++#define BACKGROUNDWIDGET_H
++
++#include <QWidget>
++
++class BackgroundWidget : public QWidget {
++    Q_OBJECT
++
++public:
++    explicit BackgroundWidget(QWidget *parent = nullptr);
++
++protected:
++    void paintEvent(QPaintEvent *event) override;
++
++private:
++    QPixmap m_background;
++};
++
++#endif // BACKGROUNDWIDGET_H
++
+diff --git a/include/dynamometer.h b/include/dynamometer.h
+new file mode 100644
+index 0000000..9af63c0
+--- /dev/null
++++ b/include/dynamometer.h
+@@ -0,0 +1,29 @@
++// File: include/dynamometer.h
++
++#ifndef DYNAMOMETER_H
++#define DYNAMOMETER_H
++
++#include <QWidget>
++
++class Dynamometer : public QWidget {
++    Q_OBJECT
++
++public:
++    explicit Dynamometer(QWidget *parent = nullptr);
++    void setValue(int value);
++    void setPosition(int x, int y);
++    QPoint getPosition() const;
++
++protected:
++    void paintEvent(QPaintEvent *event) override;
++
++private:
++    int m_value;
++    int m_x;
++    int m_y;
++    QPixmap m_gauge;
++
++    void drawGauge(QPainter &painter);
++};
++
++#endif // DYNAMOMETER_H
+diff --git a/include/mainwindow.h b/include/mainwindow.h
+index 7c6d460..8b006b5 100644
+--- a/include/mainwindow.h
++++ b/include/mainwindow.h
+@@ -4,6 +4,8 @@
+ #define MAINWINDOW_H
+ 
+ #include <QMainWindow>
++#include "backgroundwidget.h"
++#include "dynamometer.h"
+ 
+ namespace Ui {
+ class MainWindow;
+@@ -17,7 +19,8 @@ public:
+     ~MainWindow();
+ 
+ private:
+-    Ui::MainWindow *ui;
++    BackgroundWidget *m_backgroundWidget;
++    Dynamometer *m_dynamometer;
+ };
+ 
+ #endif // MAINWINDOW_H
+diff --git a/resources/images.qrc b/resources/images.qrc
+new file mode 100644
+index 0000000..3f7f5dd
+--- /dev/null
++++ b/resources/images.qrc
+@@ -0,0 +1,6 @@
++<RCC>
++    <qresource prefix="/">
++        <file>../images/gradient_background.png</file>
++        <file>../images/dynamometer_forTest.png</file>
++    </qresource>
++</RCC>
+diff --git a/src/backgroundwidget.cpp b/src/backgroundwidget.cpp
+new file mode 100644
+index 0000000..2334903
+--- /dev/null
++++ b/src/backgroundwidget.cpp
+@@ -0,0 +1,16 @@
++#include "backgroundwidget.h"
++#include <QPainter>
++#include <QPixmap>
++#include <QDebug>
++
++BackgroundWidget::BackgroundWidget(QWidget *parent) :
++    QWidget(parent),
++    m_background(":/images/gradient_background.png") {}
++
++void BackgroundWidget::paintEvent(QPaintEvent *event) {
++    Q_UNUSED(event);
++
++    QPainter painter(this);
++    QPixmap scaledBackground = m_background.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
++    painter.drawPixmap(rect(), scaledBackground);
++}
+diff --git a/src/dynamometer.cpp b/src/dynamometer.cpp
+new file mode 100644
+index 0000000..c95618e
+--- /dev/null
++++ b/src/dynamometer.cpp
+@@ -0,0 +1,41 @@
++// File: src/dynamometer.cpp
++
++#include "dynamometer.h"
++#include <QPainter>
++#include <QPixmap>
++#include <QDebug>
++
++Dynamometer::Dynamometer(QWidget *parent) :
++    QWidget(parent),
++    m_value(0),
++    m_x(0),
++    m_y(0),
++    m_gauge(":/images/dynamometer_forTest.png") {}
++
++void Dynamometer::setValue(int value) {
++    if (value != m_value) {
++        m_value = value;
++        update();
++    }
++}
++
++void Dynamometer::setPosition(int x, int y) {
++    m_x = x;
++    m_y = y;
++    update();
++}
++
++QPoint Dynamometer::getPosition() const {
++    return QPoint(m_x, m_y);
++}
++
++void Dynamometer::paintEvent(QPaintEvent *event) {
++    Q_UNUSED(event);
++
++    QPainter painter(this);
++
++    // Usa le coordinate specificate per disegnare l'immagine
++    painter.drawPixmap(m_x, m_y, m_gauge);
++
++}
++
+diff --git a/src/main.cpp b/src/main.cpp
+index cbc8f4d..7e512c5 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -1,7 +1,7 @@
+ // File: src/main.cpp
+ 
+ #include <QApplication>
+-#include "mainwindow.h"
++#include "../include/mainwindow.h"
+ 
+ int main(int argc, char *argv[]) {
+     QApplication app(argc, argv);
+diff --git a/src/mainwindow.cpp b/src/mainwindow.cpp
+index 0a408c0..8553e93 100644
+--- a/src/mainwindow.cpp
++++ b/src/mainwindow.cpp
+@@ -1,14 +1,45 @@
+ // File: src/mainwindow.cpp
+ 
+-#include "mainwindow.h"
+-#include "ui_mainwindow.h"
++#include "../include/mainwindow.h"
++#include "backgroundwidget.h"
++#include "dynamometer.h"
++#include <QGridLayout>
++#include <QTimer>
+ 
+ MainWindow::MainWindow(QWidget *parent) :
+     QMainWindow(parent),
+-    ui(new Ui::MainWindow) {
+-    ui->setupUi(this);
++    m_backgroundWidget(new BackgroundWidget(this)),
++    m_dynamometer(new Dynamometer(this)) {
++
++    // Impostare le dimensioni della finestra
++    setFixedSize(800, 600);
++
++    // Rimuovere il titolo e i bordi della finestra
++    setWindowFlags(Qt::FramelessWindowHint);
++
++
++    QWidget *centralWidget = new QWidget(this);
++    setCentralWidget(centralWidget);
++
++    // Usa QGridLayout per sovrapporre i widget
++    QGridLayout *gridLayout = new QGridLayout(centralWidget);
++    gridLayout->setMargin(0);
++    gridLayout->setSpacing(0);
++    gridLayout->addWidget(m_backgroundWidget, 0, 0);
++    gridLayout->addWidget(m_dynamometer, 0, 0);
++
++    // Imposta le posizioni delle ghiere
++    m_dynamometer->setPosition(100, 100); // Posizione della prima ghiera
++
++    // Simulazione aggiornamento valore
++    QTimer *timer = new QTimer(this);
++    connect(timer, &QTimer::timeout, [this]() {
++        static int value = 0;
++        value = (value + 1) % 100;
++        m_dynamometer->setValue(value);
++    });
++    timer->start(1000);
+ }
+ 
+ MainWindow::~MainWindow() {
+-    delete ui;
+ }
+diff --git a/src/mainwindow.ui b/src/mainwindow.ui
+index b637ad6..12c4401 100644
+--- a/src/mainwindow.ui
++++ b/src/mainwindow.ui
+@@ -1,25 +1,58 @@
+-<ui version="4.0" >
+- <author></author>
+- <comment></comment>
+- <exportmacro></exportmacro>
++<?xml version="1.0" encoding="UTF-8"?>
++<ui version="4.0">
+  <class>MainWindow</class>
+- <widget class="QMainWindow" name="MainWindow" >
+-  <property name="geometry" >
+-   <rect>
+-    <x>0</x>
+-    <y>0</y>
+-    <width>800</width>
+-    <height>600</height>
+-   </rect>
++ <widget class="QMainWindow" name="MainWindow">
++  <property name="enabled">
++   <bool>true</bool>
+   </property>
+-  <property name="windowTitle" >
++  <property name="windowTitle">
+    <string>MainWindow</string>
+   </property>
+-  <widget class="QMenuBar" name="menubar" />
+-  <widget class="QWidget" name="centralwidget" />
+-  <widget class="QStatusBar" name="statusbar" />
++  <widget class="QWidget" name="centralwidget">
++   <widget class="QLabel" name="backgroundLabel">
++    <property name="geometry">
++     <rect>
++      <x>43</x>
++      <y>26</y>
++      <width>531</width>
++      <height>251</height>
++     </rect>
++    </property>
++    <property name="text">
++     <string>background</string>
++    </property>
++   </widget>
++   <widget class="Dynamometer" name="dynamometer_widget" native="true">
++    <property name="geometry">
++     <rect>
++      <x>200</x>
++      <y>380</y>
++      <width>120</width>
++      <height>80</height>
++     </rect>
++    </property>
++   </widget>
++  </widget>
++  <widget class="QMenuBar" name="menubar">
++   <property name="geometry">
++    <rect>
++     <x>0</x>
++     <y>0</y>
++     <width>797</width>
++     <height>22</height>
++    </rect>
++   </property>
++  </widget>
++  <widget class="QStatusBar" name="statusbar"/>
+  </widget>
+- <pixmapfunction></pixmapfunction>
++ <customwidgets>
++  <customwidget>
++   <class>Dynamometer</class>
++   <extends>QWidget</extends>
++   <header>dynamometer.h</header>
++   <container>1</container>
++  </customwidget>
++ </customwidgets>
++ <resources/>
+  <connections/>
+ </ui>
+-
+
+commit 387fd5126571088013567678543e7fa2a83d2b54
+Author: MARCOP100 <ss100gohan@gmail.com>
+Date:   Sun Jun 9 16:04:54 2024 +0200
+
+    Aggiunte le immagini del dinamometro e aggiornato il codice per caricarle
+
+diff --git a/images.qrc b/images.qrc
+index e69de29..b28bb8e 100644
+--- a/images.qrc
++++ b/images.qrc
+@@ -0,0 +1,8 @@
++<!-- File: images.qrc -->
++
++<RCC>
++    <qresource prefix="/">
++        <file>images/dynamometer_with_improved_yellow_needle.png</file>
++        <file>images/gradient_background.png</file>
++    </qresource>
++</RCC>
+diff --git a/images/dynamometer_with_improved_yellow_needle.png b/images/dynamometer_with_improved_yellow_needle.png
+new file mode 100755
+index 0000000..426b41a
+Binary files /dev/null and b/images/dynamometer_with_improved_yellow_needle.png differ
+diff --git a/images/gradient_background.png b/images/gradient_background.png
+new file mode 100755
+index 0000000..974008a
+Binary files /dev/null and b/images/gradient_background.png differ
+
+commit 9452b1d148689e04a3a364d0208b8d670da0bd92
+Author: MARCOP100 <ss100gohan@gmail.com>
+Date:   Sun Jun 9 15:39:41 2024 +0200
+
+    Configurazione iniziale del progetto Qt
+
+diff --git a/.gitignore b/.gitignore
+index 259148f..4a0b530 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,32 +1,74 @@
+-# Prerequisites
+-*.d
++# This file is used to ignore files which are generated
++# ----------------------------------------------------------------------------
+ 
+-# Compiled Object files
+-*.slo
+-*.lo
++*~
++*.autosave
++*.a
++*.core
++*.moc
+ *.o
+ *.obj
++*.orig
++*.rej
++*.so
++*.so.*
++*_pch.h.cpp
++*_resource.rc
++*.qm
++.#*
++*.*#
++core
++!core/
++tags
++.DS_Store
++.directory
++*.debug
++Makefile*
++*.prl
++*.app
++moc_*.cpp
++ui_*.h
++qrc_*.cpp
++Thumbs.db
++*.res
++*.rc
++/.qmake.cache
++/.qmake.stash
+ 
+-# Precompiled Headers
+-*.gch
+-*.pch
++# qtcreator generated files
++*.pro.user*
++CMakeLists.txt.user*
+ 
+-# Compiled Dynamic libraries
+-*.so
+-*.dylib
+-*.dll
++# xemacs temporary files
++*.flc
+ 
+-# Fortran module files
+-*.mod
+-*.smod
++# Vim temporary files
++.*.swp
+ 
+-# Compiled Static libraries
+-*.lai
+-*.la
+-*.a
+-*.lib
++# Visual Studio generated files
++*.ib_pdb_index
++*.idb
++*.ilk
++*.pdb
++*.sln
++*.suo
++*.vcproj
++*vcproj.*.*.user
++*.ncb
++*.sdf
++*.opensdf
++*.vcxproj
++*vcxproj.*
+ 
+-# Executables
++# MinGW generated files
++*.Debug
++*.Release
++
++# Python byte code
++*.pyc
++
++# Binaries
++# --------
++*.dll
+ *.exe
+-*.out
+-*.app
++
+diff --git a/DinamometerQt.pro b/DinamometerQt.pro
+new file mode 100644
+index 0000000..842c652
+--- /dev/null
++++ b/DinamometerQt.pro
+@@ -0,0 +1,24 @@
++# File: DinamometerQt.pro
++
++QT += core gui
++
++greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
++
++TARGET = DinamometerQt
++TEMPLATE = app
++
++SOURCES += src/main.cpp \
++           src/mainwindow.cpp
++
++HEADERS += include/mainwindow.h
++
++FORMS += src/mainwindow.ui \
++    src/mainwindow.ui
++
++# Directory per le immagini
++RESOURCES += images.qrc
++
++# Default rules for deployment.
++#qnx: target.path = /tmp/$${TARGET}/bin
++#else: unix:!android: target.path = /opt/$${TARGET}/bin
++#!isEmpty(target.path): INSTALLS += target
+diff --git a/images.qrc b/images.qrc
+new file mode 100644
+index 0000000..e69de29
+diff --git a/include/mainwindow.h b/include/mainwindow.h
+new file mode 100644
+index 0000000..7c6d460
+--- /dev/null
++++ b/include/mainwindow.h
+@@ -0,0 +1,24 @@
++// File: include/mainwindow.h
++
++#ifndef MAINWINDOW_H
++#define MAINWINDOW_H
++
++#include <QMainWindow>
++
++namespace Ui {
++class MainWindow;
++}
++
++class MainWindow : public QMainWindow {
++    Q_OBJECT
++
++public:
++    explicit MainWindow(QWidget *parent = nullptr);
++    ~MainWindow();
++
++private:
++    Ui::MainWindow *ui;
++};
++
++#endif // MAINWINDOW_H
++
+diff --git a/src/main.cpp b/src/main.cpp
+new file mode 100644
+index 0000000..cbc8f4d
+--- /dev/null
++++ b/src/main.cpp
+@@ -0,0 +1,11 @@
++// File: src/main.cpp
++
++#include <QApplication>
++#include "mainwindow.h"
++
++int main(int argc, char *argv[]) {
++    QApplication app(argc, argv);
++    MainWindow w;
++    w.show();
++    return app.exec();
++}
+diff --git a/src/mainwindow.cpp b/src/mainwindow.cpp
+new file mode 100644
+index 0000000..0a408c0
+--- /dev/null
++++ b/src/mainwindow.cpp
+@@ -0,0 +1,14 @@
++// File: src/mainwindow.cpp
++
++#include "mainwindow.h"
++#include "ui_mainwindow.h"
++
++MainWindow::MainWindow(QWidget *parent) :
++    QMainWindow(parent),
++    ui(new Ui::MainWindow) {
++    ui->setupUi(this);
++}
++
++MainWindow::~MainWindow() {
++    delete ui;
++}
+diff --git a/src/mainwindow.ui b/src/mainwindow.ui
+new file mode 100644
+index 0000000..b637ad6
+--- /dev/null
++++ b/src/mainwindow.ui
+@@ -0,0 +1,25 @@
++<ui version="4.0" >
++ <author></author>
++ <comment></comment>
++ <exportmacro></exportmacro>
++ <class>MainWindow</class>
++ <widget class="QMainWindow" name="MainWindow" >
++  <property name="geometry" >
++   <rect>
++    <x>0</x>
++    <y>0</y>
++    <width>800</width>
++    <height>600</height>
++   </rect>
++  </property>
++  <property name="windowTitle" >
++   <string>MainWindow</string>
++  </property>
++  <widget class="QMenuBar" name="menubar" />
++  <widget class="QWidget" name="centralwidget" />
++  <widget class="QStatusBar" name="statusbar" />
++ </widget>
++ <pixmapfunction></pixmapfunction>
++ <connections/>
++</ui>
++
+
+commit 3fb42b82e0082e327b263811a1c64099d7c0dc49
+Author: MarcoP100 <130357199+MarcoP100@users.noreply.github.com>
+Date:   Sun Jun 9 11:43:15 2024 +0200
+
+    Initial commit
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..259148f
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,32 @@
++# Prerequisites
++*.d
++
++# Compiled Object files
++*.slo
++*.lo
++*.o
++*.obj
++
++# Precompiled Headers
++*.gch
++*.pch
++
++# Compiled Dynamic libraries
++*.so
++*.dylib
++*.dll
++
++# Fortran module files
++*.mod
++*.smod
++
++# Compiled Static libraries
++*.lai
++*.la
++*.a
++*.lib
++
++# Executables
++*.exe
++*.out
++*.app
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..cb082e7
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,2 @@
++# DinamometerQt
++Progetto per un dinamometro con lancetta in Qt

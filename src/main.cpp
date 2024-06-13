@@ -1,7 +1,5 @@
-// File: src/main.cpp
-
 #include <QApplication>
-#include "../include/mainwindow.h"
+#include "mainwindow.h"
 
 
 int main(int argc, char *argv[]) {

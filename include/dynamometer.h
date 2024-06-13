@@ -21,6 +21,12 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
+    void drawGauge(QPainter &painter);
+    void drawNeedle(QPainter &painter);
+    void drawTacks(QPainter &painter);
+    void generateGaugeCache();
+    void drawGradientBackground(QPainter &painter);
+
     int m_value;
     int m_maxValue;
     int m_tackCount;
@@ -28,15 +34,9 @@ private:
     int m_diameter; // raggio della ghiera. E' escluso l'eventuale anello esterno
     int m_x;
     int m_y;
-
-    QPixmap m_gaugeCache;
     bool m_cacheDirty;
+    QPixmap m_gaugeCache;
 
-    void drawGauge(QPainter &painter);
-    void drawNeedle(QPainter &painter);
-    void drawTacks(QPainter &painter);
-    void generateGaugeCache();
-    void drawGradientBackground(QPainter &painter);
 };
 } // namespace MyProject
 
