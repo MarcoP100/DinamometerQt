@@ -12,8 +12,6 @@ Dynamometer::Dynamometer(QWidget *parent) :
     m_tackCount(10),
     m_showNeedle(true),
     m_diameter(0),
-    m_x(0),
-    m_y(0),
     m_cacheDirty(true) {} // Initialize m_cacheDirty to true
 
 void Dynamometer::setValue(int value) {
@@ -46,10 +44,10 @@ void Dynamometer::setShowNeedle(bool show) {
     update();
 }
 
-void Dynamometer::setPosition(int x, int y) {
-    m_x = x;
-    m_y = y;
-    update();
+void Dynamometer::setPositionCenter(int x, int y) {
+    m_center = QPoint(x, y);
+    m_cacheDirty = true;
+    update(); // Forza il ridisegno del widget
 }
 
 
@@ -64,9 +62,7 @@ void Dynamometer::paintEvent(QPaintEvent *event) {
     }
 
     // Disegna la cache della ghiera centrata nel widget
-    //int x = (width() - m_gaugeCache.width()) / 2;
-    //int y = (height() - m_gaugeCache.height()) / 2;
-    painter.drawPixmap(m_x, m_y, m_gaugeCache);
+    painter.drawPixmap(0, 0, m_gaugeCache);
 
     // Disegna la lancetta se necessario
     /*if (m_showNeedle) {
@@ -93,7 +89,8 @@ void Dynamometer::generateGaugeCache() {
 void Dynamometer::drawGradientBackground(QPainter &painter) {
 
     // Centro del gradiente
-    QPointF center(width() / 2, height() / 2);
+    QPointF center(m_gaugeCache.width()/2, m_gaugeCache.height()/2);
+
 
     // Raggio del gradiente
     qreal radius = m_diameter / 2;
@@ -110,7 +107,7 @@ void Dynamometer::drawGradientBackground(QPainter &painter) {
     painter.setBrush(QBrush(gradient));
     painter.setPen(Qt::NoPen);
 
-    QRect gradientRect((width() - m_diameter) / 2, (height() - m_diameter) / 2, m_diameter, m_diameter);
+    QRect gradientRect(center.x() - radius,center.y() - radius, m_diameter, m_diameter);
     painter.drawEllipse(gradientRect);
 }
 
@@ -143,14 +140,14 @@ void Dynamometer::drawNeedle(QPainter &painter) {
 }
 
 void Dynamometer::drawTacks(QPainter &painter) {
-    painter.save();
-    int side = qMin(width(), height());
-    painter.translate(width() / 2 + m_x, height() / 2 + m_y);
+   painter.save();
+    /*int side = qMin(width(), height());
+   painter.translate(width() / 2 + m_x, height() / 2 + m_y);
     painter.setPen(QPen(Qt::white, 2));
     for (int i = 0; i < m_tackCount; ++i) {
         painter.drawLine(0, -side / 2 + 10, 0, -side / 2 + 20);
         painter.rotate(360.0 / m_tackCount);
-    }
-    painter.restore();
+    }*/
+    painter.restore();;
 }
 }

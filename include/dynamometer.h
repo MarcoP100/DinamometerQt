@@ -15,7 +15,7 @@ public:
     void setTackCount(int count);
     void setShowNeedle(bool show); 
     void setDiameter(int diameter);
-    void setPosition(int x, int y);
+    void setPositionCenter(int x, int y); // Nuovo metodo
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -31,9 +31,8 @@ private:
     int m_maxValue;
     int m_tackCount;
     bool m_showNeedle;
-    int m_diameter; // raggio della ghiera. E' escluso l'eventuale anello esterno
-    int m_x;
-    int m_y;
+    int m_diameter; // diametro della ghiera. E' escluso l'eventuale anello esterno
+    QPoint m_center; // Centro della ghiera
     bool m_cacheDirty;
     QPixmap m_gaugeCache;
 

@@ -21,19 +21,25 @@ MainWindow::MainWindow(QWidget *parent)
     m_backgroundWidget1->setUseSvg(false);
 
     m_dynamometer = new Dynamometer(m_backgroundWidget1);
-    m_dynamometer->setGeometry(0, 0, 400, 400); // Posiziona Dynamometer
+    int diameterDinamometer = 400;
+    int x_centerDin = width()/2;
+    int y_centerDin = height()/2;
+    int x = x_centerDin - (diameterDinamometer / 2);
+    int y = y_centerDin - (diameterDinamometer / 2);
+
+    m_dynamometer->setGeometry(x, y, diameterDinamometer, diameterDinamometer); // Posiziona Dynamometer
     stackedWidget->addWidget(m_backgroundWidget1);
 
-    // imposta il diamero del dinamometro
-    m_dynamometer->setDiameter(200);
+    // imposta il diametro del dinamometro
+    m_dynamometer->setDiameter(diameterDinamometer);
 
     // Imposta le posizioni delle ghiere
-    m_dynamometer->setPosition(100, 100);
+    m_dynamometer->setPositionCenter(x_centerDin, y_centerDin);
 
     // Imposta altri parametri delle ghiere
-    m_dynamometer->setMaxValue(60);
-    m_dynamometer->setTackCount(12);
-    m_dynamometer->setShowNeedle(true);
+   // m_dynamometer->setMaxValue(60);
+   // m_dynamometer->setTackCount(12);
+   // m_dynamometer->setShowNeedle(true);
 
     setCentralWidget(stackedWidget);
 
