@@ -1,5 +1,3 @@
-// File: include/mainwindow.h
-
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -20,8 +18,8 @@ public:
 
 private:
     QStackedWidget *stackedWidget;
-    MyProject::BackgroundWidget *m_backgroundWidget1;
-    MyProject::Dynamometer *m_dynamometer;
+    BackgroundWidget *m_backgroundWidget1;
+    Dynamometer *m_dynamometer;
 
 };
 

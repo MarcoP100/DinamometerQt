@@ -3,6 +3,11 @@
 #include <QPaintEvent>
 #include <QRadialGradient>
 #include <QColor>
+#include <QDebug>
+
+#include <QGraphicsBlurEffect>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
 
 namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
@@ -12,7 +17,13 @@ Dynamometer::Dynamometer(QWidget *parent) :
     m_tackCount(10),
     m_showNeedle(true),
     m_diameter(0),
-    m_cacheDirty(true) {} // Initialize m_cacheDirty to true
+    m_cacheDirty(true),
+    m_showChromeRing(true),
+    m_chromeRingWidth(10),
+    m_chromeRingColor(Qt::gray){
+
+    qDebug() << "Dynamometer creato";
+    } // Initialize m_cacheDirty to true
 
 void Dynamometer::setValue(int value) {
     if (value != m_value) {
@@ -51,6 +62,24 @@ void Dynamometer::setPositionCenter(int x, int y) {
 }
 
 
+void Dynamometer::setShowChromeRing(bool show) {
+    m_showChromeRing = show;
+    m_cacheDirty = true;
+    update();
+}
+
+void Dynamometer::setChromeRingWidth(int width) {
+    m_chromeRingWidth = width;
+    m_cacheDirty = true;
+    update();
+}
+
+void Dynamometer::setChromeRingColor(const QColor &color) {
+    m_chromeRingColor = color;
+    m_cacheDirty = true;
+    update();
+}
+
 void Dynamometer::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
 
@@ -79,11 +108,10 @@ void Dynamometer::generateGaugeCache() {
     // Disegna la sfumatura di sfondo
     drawGradientBackground(painter);
 
-    // Disegna la ghiera
-    //drawGauge(painter);
-
-    // Disegna le tacche
-    //drawTacks(painter);
+    // Disegna l'anello cromato
+    if (m_showChromeRing) {
+        drawChromeRing(painter);
+    }
 }
 
 void Dynamometer::drawGradientBackground(QPainter &painter) {
@@ -150,4 +178,74 @@ void Dynamometer::drawTacks(QPainter &painter) {
     }*/
     painter.restore();;
 }
+
+
+
+void Dynamometer::drawChromeRing(QPainter &painter) {
+    QPointF center(m_gaugeCache.width() / 2, m_gaugeCache.height() / 2);
+    float innerRadius = m_diameter / 2;
+    float outerRadius = innerRadius + m_chromeRingWidth;
+
+    QImage ringImage(m_gaugeCache.width(), m_gaugeCache.height(), QImage::Format_ARGB32);
+    ringImage.fill(Qt::transparent);
+    QPainter ringPainter(&ringImage);
+
+
+    for (int i = 0; i < m_chromeRingWidth; ++i) {
+        int colorValue = 200 * (1 - static_cast<double>(i) / m_chromeRingWidth);
+        QColor color(colorValue, colorValue, colorValue);
+        ringPainter.setPen(QPen(color));
+        //ringPainter.setRenderHint(QPainter::Antialiasing);
+        ringPainter.drawEllipse(center, outerRadius - i, outerRadius - i);
+    }
+
+
+
+    // Apply a slight blur to the gradient
+    QImage blurredImage = ringImage;
+    QGraphicsBlurEffect *blur = new QGraphicsBlurEffect;
+    blur->setBlurRadius(3);
+    QGraphicsScene scene;
+    QGraphicsPixmapItem item;
+    item.setPixmap(QPixmap::fromImage(blurredImage));
+    item.setGraphicsEffect(blur);
+    scene.addItem(&item);
+    QImage result(m_gaugeCache.width(), m_gaugeCache.height(), QImage::Format_ARGB32);
+    result.fill(Qt::transparent);
+    QPainter finalPainter(&result);
+    scene.render(&finalPainter);
+
+    // Enhance the contrast to make it more metallic
+    QImage enhancedImage = result;
+    QPainter enhancePainter(&enhancedImage);
+    enhancePainter.setCompositionMode(QPainter::CompositionMode_Multiply);
+
+
+    // Creare una maschera per l'anello
+    QRegion outerRegion = QRegion(center.x() - outerRadius, center.y() - outerRadius, outerRadius * 2, outerRadius * 2, QRegion::Ellipse);
+    QRegion innerRegion = QRegion(center.x() - innerRadius, center.y() - innerRadius, innerRadius * 2, innerRadius * 2, QRegion::Ellipse);
+    QRegion ringRegion = outerRegion.subtracted(innerRegion);
+    enhancePainter.setClipRegion(ringRegion);
+
+    enhancePainter.fillRect(enhancedImage.rect(), QColor(200, 200, 200));
+    enhancePainter.end();
+
+       painter.setRenderHint(QPainter::Antialiasing);
+    painter.drawImage(0, 0, enhancedImage);
+
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(center, innerRadius, innerRadius);
+
+    // Pulire la memoria allocata
+    delete blur;
+
+}
+
+Dynamometer::~Dynamometer() {
+
+    // Dealloca le risorse qui, se necessario
+    qDebug() << "Dynamometer distrutto";
+}
+
 }

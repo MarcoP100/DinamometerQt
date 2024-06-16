@@ -10,24 +10,29 @@ namespace MyProject {
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , stackedWidget(new QStackedWidget(this)) {
+    , stackedWidget(new QStackedWidget(this))
+    , m_backgroundWidget1(new BackgroundWidget(this))
+    , m_dynamometer(new Dynamometer(m_backgroundWidget1))
+     {
 
     // Impostare le dimensioni della finestra
     setFixedSize(800, 600);
     setWindowFlags(Qt::FramelessWindowHint);
 
     // Pagina 1 con Dynamometer
-    m_backgroundWidget1 = new BackgroundWidget(stackedWidget);
+    //m_backgroundWidget1 = new BackgroundWidget(stackedWidget);
     m_backgroundWidget1->setUseSvg(false);
 
-    m_dynamometer = new Dynamometer(m_backgroundWidget1);
     int diameterDinamometer = 400;
+    int chromeRingWidht = 25;
     int x_centerDin = width()/2;
     int y_centerDin = height()/2;
-    int x = x_centerDin - (diameterDinamometer / 2);
-    int y = y_centerDin - (diameterDinamometer / 2);
+    int x = x_centerDin - (diameterDinamometer / 2) - chromeRingWidht;
+    int y = y_centerDin - (diameterDinamometer / 2) - chromeRingWidht;
+    int widgetDinWidth  = diameterDinamometer + (chromeRingWidht * 2);
+    int widgetDinHeight  = diameterDinamometer + (chromeRingWidht * 2);
 
-    m_dynamometer->setGeometry(x, y, diameterDinamometer, diameterDinamometer); // Posiziona Dynamometer
+    m_dynamometer->setGeometry(x, y, widgetDinWidth, widgetDinHeight); // Posiziona Dynamometer
     stackedWidget->addWidget(m_backgroundWidget1);
 
     // imposta il diametro del dinamometro
@@ -35,6 +40,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Imposta le posizioni delle ghiere
     m_dynamometer->setPositionCenter(x_centerDin, y_centerDin);
+
+    // Imposta la visibilità e i parametri dell'anello cromato
+    m_dynamometer->setShowChromeRing(true);
+    m_dynamometer->setChromeRingWidth(chromeRingWidht);
+    m_dynamometer->setChromeRingColor(Qt::gray);
 
     // Imposta altri parametri delle ghiere
    // m_dynamometer->setMaxValue(60);
@@ -56,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() {
+
 }
 
 } // namespace MyProject
