@@ -11,8 +11,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 #directory contenente i file header
-include_directories(include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(include)
 
 #Aggiungi file sorgente
 file(GLOB SOURCES "src/*.cpp")
