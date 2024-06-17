@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Alibilita AUTOMOC
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON) # Abilita l'automazione per i file qrc
+set(CMAKE_BUILD_TYPE Debug)
 
 #directory contenente i file header
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -20,8 +22,11 @@ file(GLOB SOURCES "src/*.cpp")
 #Aggiungi file headers
 file(GLOB HEADERS "include/*.h")
 
+#Aggiunta resources
+set(RESOURCES "resources/images.qrc")
+
 #Crea l'eseguibile
-add_executable(DinamometerQt ${SOURCES} ${HEADERS})
+add_executable(DinamometerQt ${SOURCES} ${HEADERS} ${RESOURCES})
 
 #Linka le librerie Qt necessarie
 find_package(Qt5 COMPONENTS Core Widgets Svg REQUIRED)

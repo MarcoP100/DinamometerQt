@@ -37,20 +37,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     // imposta il diametro del dinamometro
     m_dynamometer->setDiameter(diameterDinamometer);
-
     // Imposta le posizioni delle ghiere
     m_dynamometer->setPositionCenter(x_centerDin, y_centerDin);
-
     // Imposta la visibilità e i parametri dell'anello cromato
     m_dynamometer->setShowChromeRing(true);
     m_dynamometer->setChromeRingWidth(chromeRingWidht);
-    m_dynamometer->setChromeRingColor(Qt::gray);
-
     // Imposta altri parametri delle ghiere
-   // m_dynamometer->setMaxValue(60);
-   // m_dynamometer->setTackCount(12);
-   // m_dynamometer->setShowNeedle(true);
+    m_dynamometer->setMaxValue(60);
+    m_dynamometer->setLargeTacksCount(10);
+   m_dynamometer->setSmallTacksBetweenCount(3);
+    m_dynamometer->setStartAngle(-240.0);
+    m_dynamometer->setEndAngle(60.0);
 
+   // aggiornamento ghiera
+    m_dynamometer->applyUpdates();
     setCentralWidget(stackedWidget);
 
 

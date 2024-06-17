@@ -10,15 +10,17 @@ class Dynamometer : public QWidget {
 
 public:
     explicit Dynamometer(QWidget *parent = nullptr);
-    void setValue(int value);
     void setMaxValue(int maxValue);
-    void setTackCount(int count);
-    void setShowNeedle(bool show); 
+    void setShowNeedle(bool show);
     void setDiameter(int diameter);
     void setPositionCenter(int x, int y);
     void setShowChromeRing(bool show);
     void setChromeRingWidth(int width);
-    void setChromeRingColor(const QColor &color);
+    void setLargeTacksCount(int count);
+    void setSmallTacksBetweenCount(int count);
+    void setStartAngle(float angle);
+    void setEndAngle(float angle);
+    void applyUpdates();
     ~Dynamometer();
 
 protected:
@@ -27,23 +29,23 @@ protected:
 private:
     void drawGauge(QPainter &painter);
     void drawNeedle(QPainter &painter);
-    void drawTacks(QPainter &painter);
+    void drawTacksAndNumbers(QPainter &painter);
     void generateGaugeCache();
     void drawGradientBackground(QPainter &painter);
     void drawChromeRing(QPainter &painter);
 
-    int m_value;
     int m_maxValue;
-    int m_tackCount;
     bool m_showNeedle;
-    int m_diameter; // diametro della ghiera. E' escluso l'eventuale anello esterno
-    QPoint m_center; // Centro della ghiera
+    int m_diameter;         // diametro della ghiera. E' escluso l'eventuale anello esterno
+    QPoint m_center;        // Centro della ghiera
     bool m_cacheDirty;
     QPixmap m_gaugeCache;
-
-    bool m_showChromeRing;
-    int m_chromeRingWidth;
-    QColor m_chromeRingColor;
+    bool m_showChromeRing;  // abilitazione anello
+    int m_chromeRingWidth;  // larghezza anello
+    float m_startAngle;     // angolo inizio tacche
+    float m_endAngle;       // anggggolo fine tacche
+    int m_largeTacksCount;   // numero tacche grandi
+    int m_smallTacksBetween; // Numero di tacche piccole tra due tacche grandi
 
 };
 } // namespace MyProject

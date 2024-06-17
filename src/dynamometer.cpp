@@ -4,46 +4,28 @@
 #include <QRadialGradient>
 #include <QColor>
 #include <QDebug>
+#include <QtMath>
 
 namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
     QWidget(parent),
-    m_value(0),
     m_maxValue(50),
-    m_tackCount(10),
     m_showNeedle(true),
     m_diameter(0),
     m_cacheDirty(true),
     m_showChromeRing(true),
     m_chromeRingWidth(10),
-    m_chromeRingColor(Qt::gray){
+    m_startAngle(0),
+    m_endAngle(0),
+    m_largeTacksCount(0),
+    m_smallTacksBetween(0){
 
     qDebug() << "Dynamometer creato";
     } // Initialize m_cacheDirty to true
 
-void Dynamometer::setValue(int value) {
-    if (value != m_value) {
-        m_value = value;
-        update();
-    }
-}
 
 void Dynamometer::setMaxValue(int maxValue) {
     m_maxValue = maxValue;
-    m_cacheDirty = true;
-    update();
-}
-
-void Dynamometer::setTackCount(int count) {
-    m_tackCount = count;
-    m_cacheDirty = true;
-    update();
-}
-
-void Dynamometer::setDiameter(int diameter) {
-    m_diameter = diameter;
-    m_cacheDirty = true;
-    update();
 }
 
 void Dynamometer::setShowNeedle(bool show) {
@@ -51,29 +33,47 @@ void Dynamometer::setShowNeedle(bool show) {
     update();
 }
 
+void Dynamometer::setDiameter(int diameter) {
+    m_diameter = diameter;
+}
 void Dynamometer::setPositionCenter(int x, int y) {
     m_center = QPoint(x, y);
-    m_cacheDirty = true;
-    update(); // Forza il ridisegno del widget
-}
 
+}
 
 void Dynamometer::setShowChromeRing(bool show) {
     m_showChromeRing = show;
-    m_cacheDirty = true;
-    update();
+
 }
 
 void Dynamometer::setChromeRingWidth(int width) {
     m_chromeRingWidth = width;
-    m_cacheDirty = true;
-    update();
+
 }
 
-void Dynamometer::setChromeRingColor(const QColor &color) {
-    m_chromeRingColor = color;
+void Dynamometer::setLargeTacksCount(int count) {
+    m_largeTacksCount = count;
+
+}
+
+void Dynamometer::setSmallTacksBetweenCount(int count) {
+    m_smallTacksBetween = count;
+
+}
+
+void Dynamometer::setStartAngle(float angle) {
+    m_startAngle = angle;
+}
+
+void Dynamometer::setEndAngle(float angle) {
+    m_endAngle = angle;
+}
+
+
+void Dynamometer::applyUpdates() {
     m_cacheDirty = true;
     update();
+
 }
 
 void Dynamometer::paintEvent(QPaintEvent *event) {
@@ -84,6 +84,7 @@ void Dynamometer::paintEvent(QPaintEvent *event) {
     if (m_cacheDirty) {
         generateGaugeCache();
         m_cacheDirty = false;
+        qDebug() << "Dynamometer aggiornato";
     }
 
     // Disegna la cache della ghiera centrata nel widget
@@ -103,6 +104,9 @@ void Dynamometer::generateGaugeCache() {
 
     // Disegna la sfumatura di sfondo
     drawGradientBackground(painter);
+
+    //Disegna tacche e numeri
+    drawTacksAndNumbers(painter);
 
     // Disegna l'anello cromato
     if (m_showChromeRing) {
@@ -149,7 +153,7 @@ void Dynamometer::drawGauge(QPainter &painter) {
 void Dynamometer::drawNeedle(QPainter &painter) {
     painter.save();
 
-    int side = qMin(width(), height());
+    /*int side = qMin(width(), height());
     int x = width() / 2;
     int y = height() / 2;
 
@@ -162,20 +166,62 @@ void Dynamometer::drawNeedle(QPainter &painter) {
         QPoint(5, 0),
         QPoint(0, side / 2 - 10)
     };
-    painter.drawConvexPolygon(needle, 3);
+    painter.drawConvexPolygon(needle, 3);*/
     painter.restore();
 }
 
-void Dynamometer::drawTacks(QPainter &painter) {
-   painter.save();
-    /*int side = qMin(width(), height());
-   painter.translate(width() / 2 + m_x, height() / 2 + m_y);
-    painter.setPen(QPen(Qt::white, 2));
-    for (int i = 0; i < m_tackCount; ++i) {
-        painter.drawLine(0, -side / 2 + 10, 0, -side / 2 + 20);
-        painter.rotate(360.0 / m_tackCount);
-    }*/
-    painter.restore();;
+void Dynamometer::drawTacksAndNumbers(QPainter &painter) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    int x = m_gaugeCache.width() / 2;
+    int y = m_gaugeCache.height() / 2;
+    float outerRadius = m_diameter / 2 - 5;
+    int largeTackLength  = 20;
+    int smallTackLength = 10;
+
+    // Calcola l'angolo incrementale tra le tacche
+    float largeTackIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
+
+    // Calcola l'angolo incrementale tra le tacche piccole
+    float smallTackIncrement = largeTackIncrement / (m_smallTacksBetween + 1);
+
+
+    painter.translate(x, y);
+
+    for (int i = 0; i < m_largeTacksCount; ++i) {
+        float largeTackAngle  = m_startAngle + largeTackIncrement * i;
+        float largeTackAngleRad  = qDegreesToRadians(largeTackAngle);
+
+        // Calcola le coordinate di partenza e di fine della tacca
+        float x1 = (outerRadius - largeTackLength) * qCos(largeTackAngleRad);
+        float y1 = (outerRadius - largeTackLength) * qSin(largeTackAngleRad);
+        float x2 = outerRadius * qCos(largeTackAngleRad);
+        float y2 = outerRadius * qSin(largeTackAngleRad);
+
+        // Disegna la tacca
+        painter.setPen(QPen(Qt::white, 4));
+        painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
+
+        // Disegna le tacche piccole
+        painter.setPen(QPen(Qt::white, 2));
+        if (i < m_largeTacksCount - 1) {
+            for (int j = 1; j <= m_smallTacksBetween; ++j) {
+                float smallTackAngle = largeTackAngle + smallTackIncrement * j;
+                float smallTackAngleRad = qDegreesToRadians(smallTackAngle);
+
+                float x1Small = (outerRadius - smallTackLength) * qCos(smallTackAngleRad);
+                float y1Small = (outerRadius - smallTackLength) * qSin(smallTackAngleRad);
+                float x2Small = outerRadius * qCos(smallTackAngleRad);
+                float y2Small = outerRadius * qSin(smallTackAngleRad);
+
+                painter.drawLine(QPointF(x1Small, y1Small), QPointF(x2Small, y2Small));
+            }
+        }
+
+    }
+
+    painter.restore();
 }
 
 
