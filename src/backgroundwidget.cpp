@@ -1,5 +1,6 @@
 #include "backgroundwidget.h"
 #include <QPainter>
+#include <QPaintEvent>
 #include <QLinearGradient>
 #include <QSvgRenderer>
 #include <QPixmap>
@@ -9,9 +10,14 @@ namespace MyProject {
 BackgroundWidget::BackgroundWidget(QWidget *parent)
     : QWidget(parent),
     m_svgRenderer(new QSvgRenderer(QStringLiteral(":/images/logo.svg"), this)),
+    m_logoCache(30,30),
     m_cacheDirty(true),
     m_useSvg(false) // Di default usa PNG
 {}
+
+BackgroundWidget::~BackgroundWidget() {
+    // Pulizia
+}
 
 void BackgroundWidget::setUseSvg(bool useSvg) {
     m_useSvg = useSvg;

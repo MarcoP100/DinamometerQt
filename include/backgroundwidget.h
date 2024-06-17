@@ -13,6 +13,7 @@ class BackgroundWidget : public QWidget {
 public:
     explicit BackgroundWidget(QWidget *parent = nullptr);
     void setUseSvg(bool useSvg); // Permette di scegliere tra SVG e PNG
+    virtual ~BackgroundWidget();
 
 protected:
     void paintEvent(QPaintEvent *event) override;

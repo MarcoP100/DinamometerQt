@@ -5,10 +5,6 @@
 #include <QColor>
 #include <QDebug>
 
-#include <QGraphicsBlurEffect>
-#include <QGraphicsScene>
-#include <QGraphicsPixmapItem>
-
 namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
     QWidget(parent),
@@ -116,6 +112,9 @@ void Dynamometer::generateGaugeCache() {
 
 void Dynamometer::drawGradientBackground(QPainter &painter) {
 
+    // Abilitare l'anti-aliasing
+    painter.setRenderHint(QPainter::Antialiasing);
+
     // Centro del gradiente
     QPointF center(m_gaugeCache.width()/2, m_gaugeCache.height()/2);
 
@@ -182,63 +181,44 @@ void Dynamometer::drawTacks(QPainter &painter) {
 
 
 void Dynamometer::drawChromeRing(QPainter &painter) {
-    QPointF center(m_gaugeCache.width() / 2, m_gaugeCache.height() / 2);
-    float innerRadius = m_diameter / 2;
-    float outerRadius = innerRadius + m_chromeRingWidth;
 
-    QImage ringImage(m_gaugeCache.width(), m_gaugeCache.height(), QImage::Format_ARGB32);
+    int highResFactor = 2;  // Fattore di risoluzione più alta
+    int highResWidth = m_gaugeCache.width() * highResFactor;
+    int highResHeight = m_gaugeCache.height() * highResFactor;
+
+    QPointF center(highResWidth / 2, highResHeight / 2);
+    float innerRadius = (m_diameter / 2) * highResFactor;
+    float outerRadius = innerRadius + (m_chromeRingWidth * highResFactor);
+
+    QImage ringImage(highResWidth, highResHeight, QImage::Format_ARGB32);
     ringImage.fill(Qt::transparent);
     QPainter ringPainter(&ringImage);
 
+    // Abilitare l'anti-aliasing
+    ringPainter.setRenderHint(QPainter::Antialiasing, true);
 
-    for (int i = 0; i < m_chromeRingWidth; ++i) {
-        int colorValue = 200 * (1 - static_cast<double>(i) / m_chromeRingWidth);
-        QColor color(colorValue, colorValue, colorValue);
-        ringPainter.setPen(QPen(color));
-        //ringPainter.setRenderHint(QPainter::Antialiasing);
-        ringPainter.drawEllipse(center, outerRadius - i, outerRadius - i);
-    }
+    // Creare il gradiente radiale per l'anello cromato
+    QRadialGradient gradient(center, outerRadius);
+    float startGradient = innerRadius/outerRadius;
+    float stopGradient = outerRadius/outerRadius;
+    float centerGradient = (((outerRadius-innerRadius)/2) + innerRadius)/outerRadius;
+    gradient.setColorAt((startGradient), QColor(125, 125, 125));
+    gradient.setColorAt(centerGradient, QColor(190, 190, 190));
+    gradient.setColorAt((stopGradient), QColor(64, 64, 64));
 
+    ringPainter.setBrush(gradient);
+    ringPainter.setPen(Qt::NoPen);
 
+    ringPainter.drawEllipse(center, outerRadius, outerRadius);
 
-    // Apply a slight blur to the gradient
-    QImage blurredImage = ringImage;
-    QGraphicsBlurEffect *blur = new QGraphicsBlurEffect;
-    blur->setBlurRadius(3);
-    QGraphicsScene scene;
-    QGraphicsPixmapItem item;
-    item.setPixmap(QPixmap::fromImage(blurredImage));
-    item.setGraphicsEffect(blur);
-    scene.addItem(&item);
-    QImage result(m_gaugeCache.width(), m_gaugeCache.height(), QImage::Format_ARGB32);
-    result.fill(Qt::transparent);
-    QPainter finalPainter(&result);
-    scene.render(&finalPainter);
+    // Ritaglia il centro trasparente
+    ringPainter.setCompositionMode(QPainter::CompositionMode_Clear);
+    ringPainter.drawEllipse(center, innerRadius, innerRadius);
 
-    // Enhance the contrast to make it more metallic
-    QImage enhancedImage = result;
-    QPainter enhancePainter(&enhancedImage);
-    enhancePainter.setCompositionMode(QPainter::CompositionMode_Multiply);
+    // Riduci l'immagine a una risoluzione normale
+    QImage finalImage = ringImage.scaled(m_gaugeCache.width(), m_gaugeCache.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-
-    // Creare una maschera per l'anello
-    QRegion outerRegion = QRegion(center.x() - outerRadius, center.y() - outerRadius, outerRadius * 2, outerRadius * 2, QRegion::Ellipse);
-    QRegion innerRegion = QRegion(center.x() - innerRadius, center.y() - innerRadius, innerRadius * 2, innerRadius * 2, QRegion::Ellipse);
-    QRegion ringRegion = outerRegion.subtracted(innerRegion);
-    enhancePainter.setClipRegion(ringRegion);
-
-    enhancePainter.fillRect(enhancedImage.rect(), QColor(200, 200, 200));
-    enhancePainter.end();
-
-       painter.setRenderHint(QPainter::Antialiasing);
-    painter.drawImage(0, 0, enhancedImage);
-
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(Qt::NoPen);
-    painter.drawEllipse(center, innerRadius, innerRadius);
-
-    // Pulire la memoria allocata
-    delete blur;
+    painter.drawImage(0, 0, finalImage);
 
 }
 

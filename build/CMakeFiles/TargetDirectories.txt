@@ -1,0 +1,4 @@
+/DebianDisk2/ProgettoQt/DinamometerQt/build/CMakeFiles/DinamometerQt.dir
+/DebianDisk2/ProgettoQt/DinamometerQt/build/CMakeFiles/edit_cache.dir
+/DebianDisk2/ProgettoQt/DinamometerQt/build/CMakeFiles/rebuild_cache.dir
+/DebianDisk2/ProgettoQt/DinamometerQt/build/CMakeFiles/DinamometerQt_autogen.dir
