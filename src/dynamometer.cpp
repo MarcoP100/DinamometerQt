@@ -18,7 +18,9 @@ Dynamometer::Dynamometer(QWidget *parent) :
     m_startAngle(0),
     m_endAngle(0),
     m_largeTacksCount(0),
-    m_smallTacksBetween(0){
+    m_smallTacksBetween(0),
+    m_largeTack(0,0,0,0),
+    m_smallTack(0,0,0,0){
 
     qDebug() << "Dynamometer creato";
     } // Initialize m_cacheDirty to true
@@ -68,6 +70,17 @@ void Dynamometer::setStartAngle(float angle) {
 void Dynamometer::setEndAngle(float angle) {
     m_endAngle = angle;
 }
+
+void Dynamometer::setlargeTack(float length, int shadowTransparency, float shadowOffset, int width){
+    m_largeTack = Tack(length,shadowTransparency,shadowOffset,width);
+
+}
+
+void Dynamometer::setsmallTack(float length, int shadowTransparency, float shadowOffset, int width){
+    m_smallTack = Tack(length,shadowTransparency,shadowOffset,width);
+
+}
+
 
 
 void Dynamometer::applyUpdates() {
@@ -176,9 +189,10 @@ void Dynamometer::drawTacksAndNumbers(QPainter &painter) {
 
     int x = m_gaugeCache.width() / 2;
     int y = m_gaugeCache.height() / 2;
-    float outerRadius = m_diameter / 2 - 5;
-    int largeTackLength  = 20;
-    int smallTackLength = 10;
+    float tackPosition = m_diameter / 2 - 5;
+    //int largeTackLength  = 20;
+    //int smallTackLength = 10;
+
 
     // Calcola l'angolo incrementale tra le tacche
     float largeTackIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
@@ -186,6 +200,24 @@ void Dynamometer::drawTacksAndNumbers(QPainter &painter) {
     // Calcola l'angolo incrementale tra le tacche piccole
     float smallTackIncrement = largeTackIncrement / (m_smallTacksBetween + 1);
 
+    painter.translate(x, y);
+    for (int i = 0; i < m_largeTacksCount; ++i) {
+        float largeTackAngle = m_startAngle + largeTackIncrement * i;
+        m_largeTack.draw(painter, largeTackAngle, tackPosition);
+
+        if (i < m_largeTacksCount - 1) {
+            for (int j = 1; j <= m_smallTacksBetween; ++j) {
+                float smallTackAngle = largeTackAngle + smallTackIncrement * j;
+                m_smallTack.draw(painter, smallTackAngle, tackPosition - 2);
+            }
+        }
+    }
+
+
+
+
+    /*// Colore dell'ombra (più scuro)
+    QColor shadowColorLarge(0, 0, 0, 100);
 
     painter.translate(x, y);
 
@@ -199,8 +231,16 @@ void Dynamometer::drawTacksAndNumbers(QPainter &painter) {
         float x2 = outerRadius * qCos(largeTackAngleRad);
         float y2 = outerRadius * qSin(largeTackAngleRad);
 
+        // Disegna l'ombra della tacca
+        painter.setPen(QPen(shadowColorLarge, 5));
+        painter.drawLine(QPointF(x1 + 3, y1 + 3), QPointF(x2 + 3, y2 + 3));
+
         // Disegna la tacca
-        painter.setPen(QPen(Qt::white, 4));
+        QLinearGradient gradient(QPointF(x1, y1), QPointF(x2, y2));
+        gradient.setColorAt(0.0, QColor(200, 200, 200));
+        gradient.setColorAt(0.5, QColor(255, 255, 255));
+        gradient.setColorAt(1.0, QColor(150, 150, 150));
+        painter.setPen(QPen(gradient, 5));
         painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
 
         // Disegna le tacche piccole
@@ -219,7 +259,7 @@ void Dynamometer::drawTacksAndNumbers(QPainter &painter) {
             }
         }
 
-    }
+    }*/
 
     painter.restore();
 }
@@ -272,6 +312,55 @@ Dynamometer::~Dynamometer() {
 
     // Dealloca le risorse qui, se necessario
     qDebug() << "Dynamometer distrutto";
+}
+
+
+// tacca. solo un esercizio
+Tack::Tack(float length, int shadowTransparency, float shadowOffset, int width)
+    : m_tackLength(length)
+    , m_shadowTransparency(shadowTransparency)
+    , m_shadowOffset(shadowOffset)
+    , m_tackWidth(width) {}
+
+void Tack::setLength(float length) {
+    m_tackLength = length;
+}
+
+void Tack::setShadowTransparency(int transparency) {
+    m_shadowTransparency = transparency;
+}
+
+void Tack::setShadowOffset(float offset) {
+    m_shadowOffset = offset;
+}
+
+void Tack::setWidth(float width) {
+    m_tackWidth = width;
+}
+
+void Tack::draw(QPainter &painter, float angle, float position) {
+    float angleRad = qDegreesToRadians(angle);
+
+    // Calcola le coordinate di partenza e di fine della tacca
+    float x1 = (position - m_tackLength) * qCos(angleRad);
+    float y1 = (position - m_tackLength) * qSin(angleRad);
+    float x2 = (position) * qCos(angleRad);
+    float y2 = (position) * qSin(angleRad);
+
+    // Colore dell'ombra (più scuro)
+    QColor shadowColor(0, 0, 0, m_shadowTransparency);
+
+    // Disegna l'ombra della tacca
+    painter.setPen(QPen(shadowColor, m_tackWidth));
+    painter.drawLine(QPointF(x1 + m_shadowOffset, y1 + m_shadowOffset), QPointF(x2 + m_shadowOffset, y2 + m_shadowOffset));
+
+    // Disegna la tacca
+    QLinearGradient gradient(QPointF(x1, y1), QPointF(x2, y2));
+    gradient.setColorAt(0.0, QColor(200, 200, 200));
+    gradient.setColorAt(0.5, QColor(255, 255, 255));
+    gradient.setColorAt(1.0, QColor(150, 150, 150));
+    painter.setPen(QPen(gradient, m_tackWidth));
+    painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
 }
 
 }
