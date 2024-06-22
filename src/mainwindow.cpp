@@ -43,14 +43,19 @@ MainWindow::MainWindow(QWidget *parent)
     m_dynamometer->setShowChromeRing(true);
     m_dynamometer->setChromeRingWidth(chromeRingWidht);
     // Imposta altri parametri delle ghiere
-    m_dynamometer->setMaxValue(60);
-    m_dynamometer->setLargeTacksCount(10);
+    m_dynamometer->setMaxValue(50);
+    m_dynamometer->setLargeTacksCount(11);
     m_dynamometer->setSmallTacksBetweenCount(3);
     m_dynamometer->setStartAngle(-240.0);
     m_dynamometer->setEndAngle(60.0);
 
     m_dynamometer->setlargeTack(20,150,2,5);
     m_dynamometer->setsmallTack(10,150,2,2);
+
+    int numberRadius = (diameterDinamometer / 2) - 50;
+    m_dynamometer->setNumberRadius(numberRadius);
+    m_dynamometer->setInnerRing(125,4);
+
 
     // aggiornamento ghiera
     m_dynamometer->applyUpdates();

@@ -12,21 +12,24 @@ class Tack;
 // classe tacca
 class Tack {
 
-public:
-    Tack(float length, int shadowTransparency, float shadowOffset, int width);
-    void draw(QPainter &painter, float angle, float position);
-
-    // Metodi di impostazione
-    void setLength(float length);
-    void setShadowTransparency(int transparency);
-    void setShadowOffset(float offset);
-    void setWidth(float width);
-
 private:
-    float m_tackLength;
+    int m_tackLength;
     int m_shadowTransparency;
     float m_shadowOffset;
     int m_tackWidth;        // larghezza tacca
+
+public:
+    Tack(int length, int shadowTransparency, float shadowOffset, int width);
+    void draw(QPainter &painter, float angle, float position);
+
+    // Metodi di impostazione
+    void setLength(int length);
+    void setShadowTransparency(int transparency);
+    void setShadowOffset(float offset);
+    void setWidth(float width);
+    int getLength() const;
+    int getWidth() const;
+
 };
 
 
@@ -46,8 +49,10 @@ public:
     void setSmallTacksBetweenCount(int count);
     void setStartAngle(float angle);
     void setEndAngle(float angle);
-    void setlargeTack(float length, int shadowTransparency, float shadowOffset, int width);
-    void setsmallTack(float length, int shadowTransparency, float shadowOffset, int width);
+    void setlargeTack(int length, int shadowTransparency, float shadowOffset, int width);
+    void setsmallTack(int length, int shadowTransparency, float shadowOffset, int width);
+    void setNumberRadius(int position);
+    void setInnerRing(int radius, int width);
     void applyUpdates();
     ~Dynamometer();
 
@@ -57,10 +62,12 @@ protected:
 private:
     void drawGauge(QPainter &painter);
     void drawNeedle(QPainter &painter);
-    void drawTacksAndNumbers(QPainter &painter);
+    void drawTacks(QPainter &painter);
     void generateGaugeCache();
     void drawGradientBackground(QPainter &painter);
     void drawChromeRing(QPainter &painter);
+    void drawNumbers(QPainter &painter);
+    void drawInternalRings(QPainter &painter);
 
 
     int m_maxValue;
@@ -75,10 +82,13 @@ private:
     float m_endAngle;       // angolo fine tacche
     int m_largeTacksCount;   // numero tacche grandi
     int m_smallTacksBetween; // Numero di tacche piccole tra due tacche grandi
-
     Tack m_largeTack;
     Tack m_smallTack;
-
+    int m_numberRadius;       // raggio a cui posizionare i numeri
+    int m_largeTackPosition;
+    int m_innerRingRadius;
+    int m_innerRingWidth;
+    int m_outerRingRadius;
 };
 
 
