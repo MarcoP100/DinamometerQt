@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
     int numberRadius = (diameterDinamometer / 2) - 50;
     m_dynamometer->setNumberRadius(numberRadius);
     m_dynamometer->setInnerRing(125,4);
-
+    m_dynamometer->setNeedle(45.0, Qt::yellow);
 
     // aggiornamento ghiera
     m_dynamometer->applyUpdates();

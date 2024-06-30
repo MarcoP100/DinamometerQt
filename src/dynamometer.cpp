@@ -26,14 +26,14 @@ Dynamometer::Dynamometer(QWidget *parent) :
     m_largeTackPosition(0),
     m_innerRingRadius(0),
     m_innerRingWidth(0),
-    m_outerRingRadius(0)
-    {
+    m_outerRingRadius(0),
+    m_needle(0.0,Qt::white)   {
 
     qDebug() << "Dynamometer creato";
     } // Initialize m_cacheDirty to true
 
 
-void Dynamometer::setMaxValue(int maxValue) {
+void Dynamometer::setMaxValue(float maxValue) {
     m_maxValue = maxValue;
 }
 
@@ -42,10 +42,10 @@ void Dynamometer::setShowNeedle(bool show) {
     update();
 }
 
-void Dynamometer::setDiameter(int diameter) {
+void Dynamometer::setDiameter(float diameter) {
     m_diameter = diameter;
 }
-void Dynamometer::setPositionCenter(int x, int y) {
+void Dynamometer::setPositionCenter(float x, float y) {
     m_center = QPoint(x, y);
 
 }
@@ -55,7 +55,7 @@ void Dynamometer::setShowChromeRing(bool show) {
 
 }
 
-void Dynamometer::setChromeRingWidth(int width) {
+void Dynamometer::setChromeRingWidth(float width) {
     m_chromeRingWidth = width;
 
 }
@@ -78,26 +78,29 @@ void Dynamometer::setEndAngle(float angle) {
     m_endAngle = angle;
 }
 
-void Dynamometer::setlargeTack(int length, int shadowTransparency, float shadowOffset, int width){
+void Dynamometer::setlargeTack(float length, float shadowTransparency, float shadowOffset, float width){
     m_largeTack = Tack(length,shadowTransparency,shadowOffset,width);
 
 }
 
-void Dynamometer::setsmallTack(int length, int shadowTransparency, float shadowOffset, int width){
+void Dynamometer::setsmallTack(float length, float shadowTransparency, float shadowOffset, float width){
     m_smallTack = Tack(length,shadowTransparency,shadowOffset,width);
 
 }
 
-void Dynamometer::setNumberRadius(int position) {
+void Dynamometer::setNumberRadius(float position) {
     m_numberRadius = position;
 }
 
-void Dynamometer::setInnerRing(int radius, int width){
+void Dynamometer::setInnerRing(float radius, float width){
     m_innerRingRadius = radius;
     m_innerRingWidth = width;
 }
 
-
+void Dynamometer::setNeedle(float angle, QColor color){
+    m_needle.setTipAngle(angle);
+    m_needle.setColor(color);
+}
 
 void Dynamometer::applyUpdates() {
     m_cacheDirty = true;
@@ -142,6 +145,7 @@ void Dynamometer::generateGaugeCache() {
     if (m_showChromeRing) {
         drawChromeRing(painter);
     }
+    m_needle.draw(painter, m_outerRingRadius, m_innerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
 }
 
 void Dynamometer::drawGradientBackground(QPainter &painter) {
@@ -150,11 +154,11 @@ void Dynamometer::drawGradientBackground(QPainter &painter) {
     painter.setRenderHint(QPainter::Antialiasing);
 
     // Centro del gradiente
-    QPointF center(m_gaugeCache.width()/2, m_gaugeCache.height()/2);
+    const QPointF center(m_gaugeCache.width()/2, m_gaugeCache.height()/2);
 
 
     // Raggio del gradiente
-    qreal radius = m_diameter / 2;
+    const qreal radius = m_diameter / 2;
 
     QRadialGradient  gradient(center, radius);
 
@@ -172,18 +176,10 @@ void Dynamometer::drawGradientBackground(QPainter &painter) {
     painter.drawEllipse(gradientRect);
 }
 
-void Dynamometer::drawGauge(QPainter &painter) {
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(Qt::white, 4));
-    int diameter = qMin(width(), height()) - 40;
-    QRect gaugeRect((width() - diameter) / 2, (height() - diameter) / 2, diameter, diameter);
-    painter.drawEllipse(gaugeRect);
-}
-
-void Dynamometer::drawNeedle(QPainter &painter) {
+/*void Dynamometer::drawNeedle(QPainter &painter) {
     painter.save();
 
-    /*int side = qMin(width(), height());
+    int side = qMin(width(), height());
     int x = width() / 2;
     int y = height() / 2;
 
@@ -196,23 +192,23 @@ void Dynamometer::drawNeedle(QPainter &painter) {
         QPoint(5, 0),
         QPoint(0, side / 2 - 10)
     };
-    painter.drawConvexPolygon(needle, 3);*/
+    painter.drawConvexPolygon(needle, 3);
     painter.restore();
-}
+}*/
 
 void Dynamometer::drawTacks(QPainter &painter) {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
 
-    int x = m_gaugeCache.width() / 2;
-    int y = m_gaugeCache.height() / 2;
+    const float x = m_gaugeCache.width() / 2;
+    const float y = m_gaugeCache.height() / 2;
     m_largeTackPosition = m_diameter / 2 - 5;
 
     // Calcola l'angolo incrementale tra le tacche
-    float largeTackIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
+    const float largeTackIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
 
     // Calcola l'angolo incrementale tra le tacche piccole
-    float smallTackIncrement = largeTackIncrement / (m_smallTacksBetween + 1);
+    const float smallTackIncrement = largeTackIncrement / (m_smallTacksBetween + 1);
 
     painter.translate(x, y);
     for (int i = 0; i < m_largeTacksCount; ++i) {
@@ -235,13 +231,13 @@ void Dynamometer::drawTacks(QPainter &painter) {
 void Dynamometer::drawChromeRing(QPainter &painter) {
 
     painter.save();
-    int highResFactor = 2;  // Fattore di risoluzione più alta
-    int highResWidth = m_gaugeCache.width() * highResFactor;
-    int highResHeight = m_gaugeCache.height() * highResFactor;
+    const float highResFactor = 2;  // Fattore di risoluzione più alta
+    const float highResWidth = m_gaugeCache.width() * highResFactor;
+    const float highResHeight = m_gaugeCache.height() * highResFactor;
 
-    QPointF center(highResWidth / 2, highResHeight / 2);
-    float innerRadius = (m_diameter / 2) * highResFactor;
-    float outerRadius = innerRadius + (m_chromeRingWidth * highResFactor);
+    const QPointF center(highResWidth / 2, highResHeight / 2);
+    const float innerRadius = (m_diameter / 2) * highResFactor;
+    const float outerRadius = innerRadius + (m_chromeRingWidth * highResFactor);
 
     QImage ringImage(highResWidth, highResHeight, QImage::Format_ARGB32);
     ringImage.fill(Qt::transparent);
@@ -250,29 +246,8 @@ void Dynamometer::drawChromeRing(QPainter &painter) {
     // Abilitare l'anti-aliasing
     ringPainter.setRenderHint(QPainter::Antialiasing, true);
 
-    // Creare il gradiente radiale per l'anello cromato
-    QRadialGradient gradient(center, outerRadius);
-    float startGradient = innerRadius/outerRadius;
-    float stopGradient = outerRadius/outerRadius;
-    float centerGradient = (((outerRadius-innerRadius)/2) + innerRadius)/outerRadius;
-    gradient.setColorAt((startGradient), QColor(125, 125, 125));
-    gradient.setColorAt(centerGradient, QColor(190, 190, 190));
-    gradient.setColorAt((stopGradient), QColor(64, 64, 64));
-
-    ringPainter.setBrush(gradient);
-    ringPainter.setPen(Qt::NoPen);
-    ringPainter.drawEllipse(center, outerRadius, outerRadius);
-
-    // Ritaglia il centro trasparente
-    ringPainter.setCompositionMode(QPainter::CompositionMode_Clear);
-    ringPainter.drawEllipse(center, innerRadius, innerRadius);
-    // Disegnare il primo anello (bordo nero)
-    ringPainter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    float ringWidth1 = 2; // Spessore del primo anello
-    ringPainter.setPen(QPen(Qt::black, ringWidth1));
-    ringPainter.setBrush(Qt::NoBrush);
-    ringPainter.drawEllipse(center, innerRadius, innerRadius);
-
+    drawRadialGradient(ringPainter, center, innerRadius, outerRadius);
+    drawInnerRing(ringPainter, center, innerRadius, highResFactor);
 
     // Riduci l'immagine a una risoluzione normale
     QImage finalImage = ringImage.scaled(m_gaugeCache.width(), m_gaugeCache.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -282,24 +257,38 @@ void Dynamometer::drawChromeRing(QPainter &painter) {
     painter.restore();
 }
 
+void Dynamometer::drawRadialGradient(QPainter &painter, const QPointF &center, float innerRadius, float outerRadius) {
+    QRadialGradient gradient(center, outerRadius);
+    gradient.setColorAt(innerRadius / outerRadius, QColor(125, 125, 125));
+    gradient.setColorAt((((outerRadius - innerRadius) / 2) + innerRadius) / outerRadius, QColor(190, 190, 190));
+    gradient.setColorAt(1.0, QColor(64, 64, 64));
+    painter.setBrush(gradient);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(center, outerRadius, outerRadius);
+}
+
+
+void Dynamometer::drawInnerRing(QPainter &painter, const QPointF &center, float innerRadius, int highResFactor) {
+    painter.setCompositionMode(QPainter::CompositionMode_Clear);
+    const float ringWidth1 = 5 * highResFactor;
+    painter.setPen(QPen(Qt::black, ringWidth1));
+    painter.drawEllipse(center, innerRadius, innerRadius);
+}
 
 void Dynamometer::drawNumbers(QPainter &painter) {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
 
-    int x = m_gaugeCache.width() / 2;
-    int y = m_gaugeCache.height() / 2;
-    float numberRadius = m_numberRadius; // Posizione dei numeri
+    const float x = m_gaugeCache.width() / 2;
+    const float y = m_gaugeCache.height() / 2;
+    const float numberRadius = m_numberRadius; // Posizione dei numeri
 
     // Calcola l'angolo incrementale tra le tacche
-    float numbersIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
+    const float numbersIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
 
-    int sizeFont = 22;
+    const int sizeFont = 22;
     QFont font("Noto Sans Thai UI", sizeFont); // Cambia "Arial" con il font desiderato e 12 con la dimensione desiderata
-    //QFont font = painter.font();
     font.setWeight(QFont::Black);
-    //font.setBold(true);
-    //font.setPointSize(sizeFont); // Imposta la dimensione del font
     painter.setFont(font);
     painter.setPen(Qt::white);
     painter.translate(x, y);
@@ -319,47 +308,15 @@ void Dynamometer::drawNumbers(QPainter &painter) {
         float textY = numberRadius * qSin(angleRad);
 
         // Calcola il rettangolo di testo centrato sulla posizione calcolata
-
-
-        int textWidth = metrics.horizontalAdvance(text);
-        int textHeight = metrics.height();
-        //int textAscent = metrics.ascent();
-        //QRect textRect = metrics.boundingRect(text);
+        float textWidth = metrics.horizontalAdvance(text);
+        float textHeight = metrics.height();
         QRect textRect(textX - textWidth / 2, textY - textHeight / 2, textWidth, textHeight); // Rettangolo per il testo
-        //painter.drawText(textRect, Qt::AlignCenter, text);
         textRect.moveCenter(QPoint(textX, textY));
-
-
-        // Riempie il rettangolo di testo con un colore semi-trasparente
-        //painter.fillRect(textRect, QColor(0, 255, 0, 100));
 
         // Disegna il contorno rosso
         QPainterPath path;
-        //path.addText(textRect.bottomLeft(), font, text);
-
-
         QPointF textPosition(textRect.center().x() - (textWidth / 2.0), textRect.center().y() + (sizeFont/2.0));
         path.addText(textPosition, font, text);
-
-        //painter.fillPath(path, QBrush(Qt::red));
-        // Disegna il riempimento
-        //     painter.setPen(Qt::white);
-        //    painter.fillPath(path, Qt::white);
-
-
-        /*int shadowOffset = 6;
-        float shadowX = shadowOffset * qCos(angleRad);  // Sposta l'ombra diagonalmente
-        float shadowY = shadowOffset * qSin(angleRad);  // Sposta l'ombra diagonalmente
-        //painter.drawText(textRect.translated(shadowX, shadowY), Qt::AlignCenter, text);
-        painter.fillPath(path, Qt::white);
-        painter.setPen(QPen(QColor(125, 125, 125, 255),1));
-        painter.drawPath(path.translated(shadowX, shadowY));*/
-
-
-        // Disegna il bordo chiaro superiore
-        //painter.setPen(QPen(QColor(255, 255, 255, 150), 2));
-        //painter.drawText(textRect.translated(-1, -1), Qt::AlignCenter, text);
-
 
         QPen pen(Qt::black);
         pen.setWidth(2); // Spessore del contorno
@@ -371,10 +328,7 @@ void Dynamometer::drawNumbers(QPainter &painter) {
         gradient.setColorAt(0.0, QColor(50, 50, 50));
         gradient.setColorAt(0.5, QColor(255, 255, 255));
         gradient.setColorAt(1.0, QColor(50, 50, 50));
-        //painter.setPen(QPen(QBrush(gradient), 1));
         painter.fillPath(path, gradient);
-        // Disegna il testo con il gradiente
-        //painter.drawText(textRect, Qt::AlignCenter, text);
 
     }
     painter.restore();
@@ -384,11 +338,11 @@ void Dynamometer::drawNumbers(QPainter &painter) {
 void Dynamometer::drawInternalRings(QPainter &painter){
     painter.save();
 
-    int highResFactor = 2;  // Fattore di risoluzione più alta
-    int highResWidth = m_gaugeCache.width() * highResFactor;
-    int highResHeight = m_gaugeCache.height() * highResFactor;
+    const float highResFactor = 5;  // Fattore di risoluzione più alta
+    const float highResWidth = m_gaugeCache.width() * highResFactor;
+    const float highResHeight = m_gaugeCache.height() * highResFactor;
 
-    QPointF center(highResWidth / 2, highResHeight / 2);
+    const QPointF center(highResWidth / 2, highResHeight / 2);
     QImage ringImage(highResWidth, highResHeight, QImage::Format_ARGB32);
     ringImage.fill(Qt::transparent);
     QPainter ringPainter(&ringImage);
@@ -398,9 +352,9 @@ void Dynamometer::drawInternalRings(QPainter &painter){
 
     /* anello esterno */
     m_outerRingRadius = (m_largeTackPosition - m_largeTack.getLength() - m_largeTack.getWidth());
-    int outterRingRadiusHR = m_outerRingRadius * highResFactor;
+    const float outterRingRadiusHR = m_outerRingRadius * highResFactor;
     ringPainter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    int ringWidth1 = 1; // Spessore del primo anello
+    const float ringWidth1 = 1; // Spessore del primo anello
     ringPainter.setPen(QPen(Qt::black, ringWidth1  * highResFactor));
     ringPainter.setBrush(Qt::NoBrush);
     ringPainter.drawEllipse(center, outterRingRadiusHR, outterRingRadiusHR);
@@ -408,8 +362,8 @@ void Dynamometer::drawInternalRings(QPainter &painter){
 
     /* anello interno */
     //ringPainter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    int innerRingRadiusHR = m_innerRingRadius * highResFactor;
-    int innerRingWidthHR = m_innerRingWidth * highResFactor;
+    const float innerRingRadiusHR = m_innerRingRadius * highResFactor;
+    const float innerRingWidthHR = m_innerRingWidth * highResFactor;
     QLinearGradient gradient(center.x() - innerRingRadiusHR, center.y() - innerRingRadiusHR, center.x() + innerRingRadiusHR, center.y() + innerRingRadiusHR);
     gradient.setColorAt(0.0, QColor(0, 0, 0));
     gradient.setColorAt(0.5, QColor(255, 255, 255));
@@ -493,6 +447,62 @@ void Tack::draw(QPainter &painter, float angle, float position) {
     gradient.setColorAt(1.0, QColor(150, 150, 150));
     painter.setPen(QPen(gradient, m_tackWidth));
     painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
+}
+
+//lancetta
+Needle::Needle(float angle, QColor color):
+    m_tipAngle(angle),
+    m_color(color)
+    {}
+
+void Needle::setTipAngle(float angle) {
+    m_tipAngle = angle;
+}
+
+void Needle::setColor(QColor color) {
+    m_color = color;
+}
+
+
+void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPointF center){
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    painter.translate(center);
+    painter.rotate(0);
+
+     QPolygonF needlePolygon;
+    float B_angle = qDegreesToRadians(m_tipAngle / 2.0);
+    float temp = std::sin(B_angle);
+    float temp2 = temp  * outerRadius / innerRadius;
+    float A_angle = M_PI - std::asin(temp2);
+    float C_angle = M_PI - B_angle - A_angle;
+
+    float C_angle_deg = qRadiansToDegrees(C_angle);
+
+    QPointF leftBase(innerRadius * std::cos(C_angle), - innerRadius * std::sin(C_angle));
+    QPointF tip(outerRadius, 0);
+    QPointF rightBase(innerRadius * std::cos(C_angle), innerRadius * std::sin(C_angle));
+
+    needlePolygon << leftBase << tip << rightBase;
+
+    // Aggiungi un arco alla base del poligono per fare la base curva
+    QPainterPath path;
+    path.moveTo(leftBase);
+    path.lineTo(tip);
+    path.lineTo(rightBase);
+    path.arcTo(- innerRadius, - innerRadius, 2 * innerRadius, 2 * innerRadius, - C_angle_deg, C_angle_deg * 2);
+    //path.closeSubpath();
+
+    painter.setBrush(m_color);
+    painter.setPen(Qt::NoPen);
+    painter.drawPath(path);
+
+
+
+
+    painter.restore();
+
 }
 
 }
