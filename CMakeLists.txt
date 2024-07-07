@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 3.5)
 # Nome del progetto
 project(DinamometerQt)
 
+# Imposta il percorso di Qt5
+set(CMAKE_PREFIX_PATH "/usr/lib/arm-linux-gnueabihf/cmake/Qt5")
+set(Qt5_DIR "/usr/lib/arm-linux-gnueabihf/cmake/Qt5")
+set(QT_RCC_EXECUTABLE "/usr/lib/qt5/bin/rcc")
+
 # Imposta il C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
