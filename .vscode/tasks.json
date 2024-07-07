@@ -4,7 +4,7 @@
         {
             "label": "Deploy to Raspberry Pi",
             "type": "shell",
-            "command": "./deploy.sh",
+            "command": "${workspaceFolder}/deploy.sh",
 
             "group": {
                 "kind": "build",
@@ -12,6 +12,23 @@
             },
             "problemMatcher": ["$gcc"],
             "detail": "Generated task by CMake Tools."
+        
+        },
+
+        {
+            "label": "Build on Wsl",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd ${workspaceFolder} && rm -rf build && mkdir -p build && cd build && cmake -DBUILD_FOR_WSL=ON .. && make && ./DinamometerQt"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Task to run CMake and Make for WSL"
         
         }
     ]
