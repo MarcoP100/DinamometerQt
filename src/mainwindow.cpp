@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
      {
 
     // Impostare le dimensioni della finestra
-    setFixedSize(800, 480);
+    setFixedSize(800, 600);
     setWindowFlags(Qt::FramelessWindowHint);
 
     // Pagina 1 con Dynamometer
