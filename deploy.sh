@@ -21,11 +21,11 @@ fi
 # Funzione per terminare il processo attivo
 terminate_process() {
   echo "Terminating the existing process on Raspberry Pi 3..."
-  ssh display@169.254.0.2 'pkill -f "${EXECUTABLE}"'
+  ssh display@169.254.0.2 "pkill -f '${EXECUTABLE}'" 
 }
 
 # Termina il processo attivo, se esiste
-terminate_process  # || true
+terminate_process  || true
 
 cd "${PROJECT_DIR}"
 
@@ -60,10 +60,10 @@ scp "${PROJECT_DIR}/build/${EXECUTABLE}" display@169.254.0.2:${DEST_DIR}
 
 # Esecuzione su Raspberry Pi 3
 #ssh -tt display@169.254.0.2 << 'EOF'
-ssh display@169.254.0.2 << 'EOF'
+ssh display@169.254.0.2 << EOF
 export QT_QPA_PLATFORM=eglfs
-export LD_LIBRARY_PATH="${DEST_DIR}"
-cd "${DEST_DIR}"
+export LD_LIBRARY_PATH=${DEST_DIR}
+cd ${DEST_DIR}
 
 #verifico presenza cartella outputHistory
 if [ ! -d "outputHistory" ]; then
@@ -72,9 +72,9 @@ if [ ! -d "outputHistory" ]; then
 fi
 
 if [ -f "output.log" ]; then
-    mv output.log outputHistory/output-$(date +'%Y%m%d-%H%M%S').log
+    mv output.log outputHistory/output-\$(date +'%Y%m%d-%H%M%S').log
 fi
-nohup "${EXECUTABLE}" -platform eglfs > output.log 2>&1 &
+nohup ./${EXECUTABLE} -platform eglfs > output.log 2>&1 &
 
 EOF
 
