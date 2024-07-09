@@ -30,6 +30,18 @@
             "problemMatcher": ["$gcc"],
             "detail": "Task to run CMake and Make for WSL"
         
+        },
+
+        {
+            "label": "Deploy and Debug on Raspberry Pi",
+            "type": "shell",
+            "command": "${workspaceFolder}/deploy_debug.sh",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "detail": "Task to deploy the application and start gdbserver on Raspberry Pi"
         }
     ]
 }

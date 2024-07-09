@@ -8,10 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-# Imposta la build type di default a Debug
-#if(NOT CMAKE_BUILD_TYPE)
-#    set(CMAKE_BUILD_TYPE Debug)
-#endif()
+
 
 # Impostazione delle variabili di configurazione
 option(BUILD_FOR_RASPBERRY_PI "Build for Raspberry Pi" OFF)
@@ -35,6 +32,14 @@ if(BUILD_FOR_WSL)
     
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWSL")
 endif()
+
+# Imposta la build type di default a Debug
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# Aggiungi flag per il debug
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 
 # Alibilita AUTOMOC
 set(CMAKE_AUTOMOC ON)

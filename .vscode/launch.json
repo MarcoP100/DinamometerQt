@@ -1,0 +1,40 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+       
+        {
+            "name": "Debug on Raspberry Pi3",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/display/DinamometerQt",
+            "args": ["-platform", "eglfs"],
+            "stopAtEntry": false,
+            "cwd": "/home/display",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerServerAddress": "169.254.0.2:2345",
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
+            "setupCommands": [
+                {
+                    "description": "Abilita la stampa per gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Deploy and Debug on Raspberry Pi",
+            "pipeTransport": {
+                "pipeProgram": "ssh",
+                "pipeArgs": ["display@169.254.0.2"],
+                "debuggerPath": "/usr/bin/gdb",
+                "pipeCwd": "",
+                "quoteArgs": false
+            },
+            "sourceFileMap": {
+                //"/home/display": "/home/marco/progettiQt/DinamometerQt",
+                "/project/src": "/home/marco/progettiQt/DinamometerQt/src",
+                "/project/include": "/home/marco/progettiQt/DinamometerQt/include"
+            }
+        }
+    ]
+}
