@@ -42,6 +42,23 @@
             },
             "problemMatcher": [],
             "detail": "Task to deploy the application and start gdbserver on Raspberry Pi"
+        },
+
+        {
+            "label": "Build on Wsl for debug",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "cd ${workspaceFolder} && rm -rf build && mkdir -p build && cd build && cmake -DBUILD_FOR_WSL=ON .. && make"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Task to run CMake/make and debug for WSL"
+        
         }
     ]
 }

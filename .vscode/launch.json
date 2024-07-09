@@ -31,9 +31,33 @@
                 "quoteArgs": false
             },
             "sourceFileMap": {
-                //"/home/display": "/home/marco/progettiQt/DinamometerQt",
                 "/project/src": "/home/marco/progettiQt/DinamometerQt/src",
                 "/project/include": "/home/marco/progettiQt/DinamometerQt/include"
+            }
+        },
+
+        {
+            "name": "Debug on WSL",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/DinamometerQt",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build on Wsl for debug",
+            "sourceFileMap": {
+                //"/home/marco/progettiQt/DinamometerQt": "${workspaceFolder}"
             }
         }
     ]
