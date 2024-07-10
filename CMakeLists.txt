@@ -57,7 +57,7 @@ file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "include/*.h")
 
 #Aggiunta resources
-set(RESOURCES "resources/images.qrc")
+set(RESOURCES "resources/images.qrc" "resources/fonts.qrc")
 
 #Crea l'eseguibile
 add_executable(DinamometerQt ${SOURCES} ${HEADERS} ${RESOURCES})

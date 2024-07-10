@@ -6,6 +6,9 @@
 #include <QDebug>
 #include <QtMath>
 #include <QPainterPath>
+#include <QFontDatabase>
+#include <QFont>
+#include <QMessageBox>
 
 namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
@@ -286,15 +289,28 @@ void Dynamometer::drawNumbers(QPainter &painter) {
     // Calcola l'angolo incrementale tra le tacche
     const float numbersIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
 
+
+    // Carica il font dall'archivio delle risorse
+    int fontId = QFontDatabase::addApplicationFont(":/fonts/NotoSans-Bold.ttf");
     const int sizeFont = 22;
-    QFont font("Noto Sans Thai UI", sizeFont); // Cambia "Arial" con il font desiderato e 12 con la dimensione desiderata
+    QFont font("Noto Sans", sizeFont);
+    if (fontId == -1) {
+        QMessageBox::warning(nullptr, "Warning", "Could not load font!");
+
+    } else {
+        QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
+        font.setFamily(fontFamily); 
+        
+    }
+
     font.setWeight(QFont::Black);
+    font.setPointSize(22);
     painter.setFont(font);
+    
     painter.setPen(Qt::white);
     painter.translate(x, y);
 
     QFontMetrics metrics(font);
-
     for (int i = 0; i < m_largeTacksCount; ++i) {
         float numbersAngle = m_startAngle + numbersIncrement * i;
         float angleRad = qDegreesToRadians(numbersAngle);
