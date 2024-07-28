@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     , m_dynamometer(new Dynamometer(m_backgroundWidget1))
      {
 
+    
+
     // Impostare le dimensioni della finestra
     setFixedSize(800, 480);
     setWindowFlags(Qt::FramelessWindowHint);
@@ -61,16 +63,26 @@ MainWindow::MainWindow(QWidget *parent)
     m_dynamometer->applyUpdates();
     setCentralWidget(stackedWidget);
 
-
-
+    m_dynamometer->setShowNeedle(true);
+    m_dynamometer->setAngleNeedle(85);
     // Simulazione aggiornamento valore
-    /*QTimer *timer = new QTimer(this);
+    QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [this]() {
         static int value = 0;
-        value = (value + 1) % 100;
-        m_dynamometer->setValue(value);
+        static int directionMov = 0;
+        if (value <= -240.0)
+            directionMov = 0;
+        else if (value >= 60.0)
+            directionMov = 1;
+        if (directionMov == 1)
+            value = (value - 1);
+        if (directionMov == 0)
+            value = (value + 1);
+        m_dynamometer->setAngleNeedle(value);
     });
-    timer->start(1000);*/
+    timer->start(30);
+
+    
 }
 
 MainWindow::~MainWindow() {

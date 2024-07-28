@@ -1,13 +1,15 @@
 {
     "version": "0.2.0",
     "configurations": [
-       
         {
             "name": "Debug on Raspberry Pi3",
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/display/DinamometerQt",
-            "args": ["-platform", "eglfs"],
+            "args": [
+                "-platform",
+                "eglfs"
+            ],
             "stopAtEntry": false,
             "cwd": "/home/display",
             "environment": [],
@@ -25,7 +27,9 @@
             "preLaunchTask": "Deploy and Debug on Raspberry Pi",
             "pipeTransport": {
                 "pipeProgram": "ssh",
-                "pipeArgs": ["display@169.254.0.2"],
+                "pipeArgs": [
+                    "display@169.254.0.2"
+                ],
                 "debuggerPath": "/usr/bin/gdb",
                 "pipeCwd": "",
                 "quoteArgs": false
@@ -33,9 +37,9 @@
             "sourceFileMap": {
                 "/project/src": "/home/marco/progettiQt/DinamometerQt/src",
                 "/project/include": "/home/marco/progettiQt/DinamometerQt/include"
-            }
+            },
+            "visualizerFile": "/home/marco/.vscode-server/data/User/workspaceStorage/14a760526838ee50e9d18f72838da4b5/tonka3000.qtvsctools/qt.natvis.xml"
         },
-
         {
             "name": "Debug on WSL",
             "type": "cppdbg",
@@ -56,9 +60,8 @@
                 }
             ],
             "preLaunchTask": "Build on Wsl for debug",
-            "sourceFileMap": {
-                //"/home/marco/progettiQt/DinamometerQt": "${workspaceFolder}"
-            }
+            "sourceFileMap": {},
+            "visualizerFile": "/home/marco/.vscode-server/data/User/workspaceStorage/14a760526838ee50e9d18f72838da4b5/tonka3000.qtvsctools/qt.natvis.xml"
         }
     ]
 }

@@ -5,16 +5,15 @@
             "label": "Deploy to Raspberry Pi",
             "type": "shell",
             "command": "${workspaceFolder}/deploy.sh",
-
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": ["$gcc"],
+            "problemMatcher": [
+                "$gcc"
+            ],
             "detail": "Generated task by CMake Tools."
-        
         },
-
         {
             "label": "Build on Wsl",
             "type": "shell",
@@ -27,11 +26,11 @@
                 "kind": "build",
                 "isDefault": false
             },
-            "problemMatcher": ["$gcc"],
+            "problemMatcher": [
+                "$gcc"
+            ],
             "detail": "Task to run CMake and Make for WSL"
-        
         },
-
         {
             "label": "Deploy and Debug on Raspberry Pi",
             "type": "shell",
@@ -43,7 +42,6 @@
             "problemMatcher": [],
             "detail": "Task to deploy the application and start gdbserver on Raspberry Pi"
         },
-
         {
             "label": "Build on Wsl for debug",
             "type": "shell",
@@ -56,9 +54,10 @@
                 "kind": "build",
                 "isDefault": false
             },
-            "problemMatcher": ["$gcc"],
+            "problemMatcher": [
+                "$gcc"
+            ],
             "detail": "Task to run CMake/make and debug for WSL"
-        
         }
     ]
 }

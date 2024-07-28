@@ -45,8 +45,13 @@ public:
 
     void setTipAngle(float angle);
     void setColor(QColor color);
-
+    void setAngle(float angle); // Metodo per impostare l'angolo
     void draw(QPainter &painter, float outerRadius, float innerRadius, QPointF center);
+
+    int getAngle() const;
+
+protected:
+   float m_angle; // Angolo della lancetta
 };
 
 
@@ -71,6 +76,7 @@ public:
     void setNumberRadius(float position);
     void setInnerRing(float radius, float width);
     void setNeedle(float angle, QColor color);
+    void setAngleNeedle(float angle);
     void applyUpdates();
     ~Dynamometer();
 
@@ -80,6 +86,7 @@ protected:
 private:
     void drawTacks(QPainter &painter);
     void generateGaugeCache();
+    void generateNeedleCache();
     void drawGradientBackground(QPainter &painter);
     void drawChromeRing(QPainter &painter);
     void drawNumbers(QPainter &painter);
@@ -93,8 +100,12 @@ private:
     bool m_showNeedle;
     float m_diameter;         // diametro della ghiera. E' escluso l'eventuale anello esterno
     QPoint m_center;        // Centro della ghiera
-    bool m_cacheDirty;
+    bool m_cacheGaugeDirty;
+    bool m_cacheNeedleDirty;
+    bool m_updateGauge;
+    bool m_updateNeedle;
     QPixmap m_gaugeCache;
+    QPixmap m_needleCache;
     bool m_showChromeRing;  // abilitazione anello
     float m_chromeRingWidth;  // larghezza anello
     float m_startAngle;     // angolo inizio tacche

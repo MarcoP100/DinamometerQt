@@ -10,13 +10,19 @@
 #include <QFont>
 #include <QMessageBox>
 
+#include <QElapsedTimer>
+#include <QDebug>
+
 namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
     QWidget(parent),
     m_maxValue(50),
-    m_showNeedle(true),
+    m_showNeedle(false),
     m_diameter(0),
-    m_cacheDirty(true),
+    m_cacheGaugeDirty(true),
+    m_cacheNeedleDirty(false),
+    m_updateGauge(true),
+    m_updateNeedle(false),
     m_showChromeRing(true),
     m_chromeRingWidth(10),
     m_startAngle(0),
@@ -42,6 +48,9 @@ void Dynamometer::setMaxValue(float maxValue) {
 
 void Dynamometer::setShowNeedle(bool show) {
     m_showNeedle = show;
+    m_updateNeedle = true;
+    m_cacheNeedleDirty = true;
+
     update();
 }
 
@@ -105,8 +114,18 @@ void Dynamometer::setNeedle(float angle, QColor color){
     m_needle.setColor(color);
 }
 
+void Dynamometer::setAngleNeedle(float angle){
+    if (m_needle.getAngle() != angle) {
+        m_needle.setAngle(angle);
+        m_updateNeedle = true;
+
+        update();
+    }
+}
+
 void Dynamometer::applyUpdates() {
-    m_cacheDirty = true;
+    m_cacheGaugeDirty = true;
+    m_updateGauge = true;
     update();
 
 }
@@ -114,21 +133,49 @@ void Dynamometer::applyUpdates() {
 void Dynamometer::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
 
+    // Inizia il timer all'inizio del metodo paintEvent
+    QElapsedTimer timer;
+    timer.start();
+
     QPainter painter(this);
 
-    if (m_cacheDirty) {
+    if (m_cacheGaugeDirty) {
         generateGaugeCache();
-        m_cacheDirty = false;
+        m_cacheGaugeDirty = false;
         qDebug() << "Dynamometer aggiornato";
     }
 
-    // Disegna la cache della ghiera centrata nel widget
-    painter.drawPixmap(0, 0, m_gaugeCache);
+    if (m_updateGauge) {
+        // Disegna la cache della ghiera centrata nel widget
+        m_updateGauge = false;
+        painter.drawPixmap(0, 0, m_gaugeCache);
+    }
+
+
 
     // Disegna la lancetta se necessario
-    /*if (m_showNeedle) {
-            drawNeedle(painter);
-        }*/
+    if (m_cacheNeedleDirty) {
+        generateNeedleCache();
+        //m_needle.draw(painter, m_outerRingRadius, m_innerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
+        m_cacheNeedleDirty = false;
+    }
+
+    if (m_updateNeedle) {
+        painter.save();
+        // Trasla al centro della ghiera
+        painter.translate(m_gaugeCache.width() / 2, m_gaugeCache.height() / 2);
+        // Applica la rotazione in base all'angolo corrente della lancetta
+        painter.rotate(m_needle.getAngle());
+        // Disegna la cache della lancetta*/
+        painter.drawPixmap(-m_gaugeCache.width() / 2, -m_gaugeCache.height() / 2, m_needleCache);
+        painter.restore();
+    }
+
+
+
+    // Log del tempo trascorso alla fine del metodo paintEvent
+    qint64 elapsed = timer.nsecsElapsed() / 1000;
+    qDebug() << "paintEvent duration:" << elapsed << "microseconds";
 }
 
 void Dynamometer::generateGaugeCache() {
@@ -148,7 +195,17 @@ void Dynamometer::generateGaugeCache() {
     if (m_showChromeRing) {
         drawChromeRing(painter);
     }
+    
+}
+
+void Dynamometer::generateNeedleCache() {
+    m_needleCache = QPixmap(m_gaugeCache.size());
+    m_needleCache.fill(Qt::transparent); // Rende la cache trasparente
+
+    QPainter painter(&m_needleCache);
+    painter.setRenderHint(QPainter::Antialiasing, true);
     m_needle.draw(painter, m_outerRingRadius, m_innerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
+    
 }
 
 void Dynamometer::drawGradientBackground(QPainter &painter) {
@@ -292,7 +349,7 @@ void Dynamometer::drawNumbers(QPainter &painter) {
 
     // Carica il font dall'archivio delle risorse
     int fontId = QFontDatabase::addApplicationFont(":/fonts/NotoSans-Bold.ttf");
-    const int sizeFont = 22;
+    const int sizeFont = 24;
     QFont font("Noto Sans", sizeFont);
     if (fontId == -1) {
         QMessageBox::warning(nullptr, "Warning", "Could not load font!");
@@ -304,13 +361,15 @@ void Dynamometer::drawNumbers(QPainter &painter) {
     }
 
     font.setWeight(QFont::Black);
-    font.setPointSize(22);
+    font.setPointSize(sizeFont);
     painter.setFont(font);
     
     painter.setPen(Qt::white);
     painter.translate(x, y);
 
     QFontMetrics metrics(font);
+    int fontSize = metrics.height();
+    //QMessageBox::information(nullptr, "Font Size", "Font height: " + QString::number(fontSize));
     for (int i = 0; i < m_largeTacksCount; ++i) {
         float numbersAngle = m_startAngle + numbersIncrement * i;
         float angleRad = qDegreesToRadians(numbersAngle);
@@ -468,7 +527,8 @@ void Tack::draw(QPainter &painter, float angle, float position) {
 //lancetta
 Needle::Needle(float angle, QColor color):
     m_tipAngle(angle),
-    m_color(color)
+    m_color(color),
+    m_angle(0)
     {}
 
 void Needle::setTipAngle(float angle) {
@@ -479,15 +539,24 @@ void Needle::setColor(QColor color) {
     m_color = color;
 }
 
+void Needle::setAngle(float angle) {
+    m_angle = angle;
+}
+
+int Needle::getAngle() const {
+    return m_angle;
+}
+
+
 
 void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPointF center){
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     painter.translate(center);
-    painter.rotate(0);
+    painter.rotate(m_angle);
 
-     QPolygonF needlePolygon;
+    QPolygonF needlePolygon;
     float B_angle = qDegreesToRadians(m_tipAngle / 2.0);
     float temp = std::sin(B_angle);
     float temp2 = temp  * outerRadius / innerRadius;
@@ -503,7 +572,7 @@ void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPoin
     needlePolygon << leftBase << tip << rightBase;
 
     // Aggiungi un arco alla base del poligono per fare la base curva
-    QPainterPath path;
+    /*QPainterPath path;
     path.moveTo(leftBase);
     path.lineTo(tip);
     path.lineTo(rightBase);
@@ -512,10 +581,59 @@ void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPoin
 
     painter.setBrush(m_color);
     painter.setPen(Qt::NoPen);
-    painter.drawPath(path);
+    painter.drawPath(path);*/
+
+    // Calcolare il punto centrale (baricentro) della lancetta
+    QPointF centroid((leftBase.x() + tip.x() + rightBase.x()) / 3, 
+                     (leftBase.y() + tip.y() + rightBase.y()) / 3);
 
 
+    // Funzione per calcolare la proiezione di un punto P su una linea definita da A e B
+    auto projectPointOnLine = [](QPointF P, QPointF A, QPointF B) -> QPointF {
+        QPointF AP = P - A;
+        QPointF AB = B - A;
+        double ab2 = AB.x() * AB.x() + AB.y() * AB.y();
+        double ap_ab = AP.x() * AB.x() + AP.y() * AB.y();
+        double t = ap_ab / ab2;
+        return A + t * AB;
+    };
 
+    // Disegnare i tre triangoli con gradienti distinti
+    auto drawTriangleWithGradient = [&](QPointF p1, QPointF p2, QPointF p3, bool arc_p3_p1) {
+        // Calcolare il punto medio tra leftBase e rightBase
+        QPointF projection = projectPointOnLine(p2, p1, p3); // Proiezione del centroide sulla linea p1-p3
+
+        QLinearGradient gradient(p2, projection);
+        gradient.setColorAt(0.0, QColor(255, 255, 0, 240)); // Colore al p2, più luminoso e meno trasparente
+        gradient.setColorAt(1.0, QColor(255, 255, 0, 100)); // Colore al midpoint, più scuro e più trasparente
+
+        
+        QPainterPath path;
+        path.moveTo(p1);
+        path.lineTo(p2);
+        path.lineTo(p3);
+        if (!arc_p3_p1) {
+            path.closeSubpath();
+        } else {
+            path.arcTo(- innerRadius, - innerRadius, 2 * innerRadius, 2 * innerRadius, - C_angle_deg, C_angle_deg * 2);
+        }
+
+        painter.setBrush(gradient);
+        painter.setPen(Qt::NoPen);
+        painter.drawPath(path);
+
+    };
+
+    drawTriangleWithGradient(leftBase, centroid, tip, false);
+    drawTriangleWithGradient(tip, centroid,rightBase, false);
+    drawTriangleWithGradient(leftBase, centroid, rightBase, true);
+
+    // Disegna linee dagli angoli della lancetta al punto centrale
+    painter.setPen(QPen(QColor(255, 255, 0, 255), 0.3));
+    painter.drawLine(leftBase, centroid);
+    painter.drawLine(tip, centroid);
+    painter.drawLine(rightBase, centroid);
+    painter.drawLine(leftBase, tip);
 
     painter.restore();
 
