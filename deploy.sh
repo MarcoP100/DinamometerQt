@@ -54,10 +54,10 @@ GROUP_ID=$(id -g)
 
 echo "Building the project in Docker..."
 # Compilazione con Docker
-docker run --rm -u $USER_ID:$GROUP_ID -v $(pwd)/..:/project -w /project/build qt5-cross-compiler cmake -DCMAKE_TOOLCHAIN_FILE=/project/toolchain-armhf.cmake /project
+docker run --rm -u $USER_ID:$GROUP_ID -v $(pwd)/..:/project -w /project/build qt5-cross-compiler:v2 cmake -DCMAKE_TOOLCHAIN_FILE=/project/toolchain-armhf.cmake /project
 
 # make
-docker run --rm -u $USER_ID:$GROUP_ID -v $(pwd)/..:/project -w /project/build qt5-cross-compiler make
+docker run --rm -u $USER_ID:$GROUP_ID -v $(pwd)/..:/project -w /project/build qt5-cross-compiler:v2 make
 
 if [ $? -eq 0 ]; then
     echo "Build successful. Copying the binary to Raspberry Pi 3..."

@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QTimer>
 #include <QStackedWidget>
+#include <QDebug>
 
 namespace MyProject {
 
@@ -15,6 +16,28 @@ MainWindow::MainWindow(QWidget *parent)
     , m_dynamometer(new Dynamometer(m_backgroundWidget1))
      {
 
+
+   
+
+    // Assicurati che la finestra principale supporti la trasparenza
+    //setAttribute(Qt::WA_TranslucentBackground);
+    //setAttribute(Qt::WA_NoSystemBackground);
+    //setAutoFillBackground(false);
+    //setStyleSheet("background:transparent;");
+     // Imposta uno sfondo temporaneo rosso per distinguere meglio
+    //setStyleSheet("background-color: red;");
+
+    // Configura il QStackedWidget per la trasparenza
+    stackedWidget->setAttribute(Qt::WA_TranslucentBackground);
+    stackedWidget->setAttribute(Qt::WA_NoSystemBackground);
+    stackedWidget->setAutoFillBackground(false);
+    stackedWidget->setStyleSheet("background:transparent;");
+
+     // Configura il BackgroundWidget per la trasparenza
+    /*m_backgroundWidget1->setAttribute(Qt::WA_TranslucentBackground);
+    m_backgroundWidget1->setAttribute(Qt::WA_NoSystemBackground);
+    m_backgroundWidget1->setAutoFillBackground(false);
+    m_backgroundWidget1->setStyleSheet("background:transparent;");*/
     
 
     // Impostare le dimensioni della finestra
@@ -24,19 +47,21 @@ MainWindow::MainWindow(QWidget *parent)
     // Pagina 1 con Dynamometer
     //m_backgroundWidget1 = new BackgroundWidget(stackedWidget);
     m_backgroundWidget1->setUseSvg(false);
-
-    int diameterDinamometer = 400;
-    int chromeRingWidht = 25;
+    
+    stackedWidget->addWidget(m_backgroundWidget1);
+   int diameterDinamometer = 350;
+    int chromeRingWidht = 15;
     int x_centerDin = width()/2;
     int y_centerDin = height()/2;
     int x = x_centerDin - (diameterDinamometer / 2) - chromeRingWidht;
     int y = y_centerDin - (diameterDinamometer / 2) - chromeRingWidht;
     int widgetDinWidth  = diameterDinamometer + (chromeRingWidht * 2);
     int widgetDinHeight  = diameterDinamometer + (chromeRingWidht * 2);
-
+    m_dynamometer->setStyleSheet("background: transparent;");
     m_dynamometer->setGeometry(x, y, widgetDinWidth, widgetDinHeight); // Posiziona Dynamometer
-    stackedWidget->addWidget(m_backgroundWidget1);
-
+    
+    
+    qDebug() << "stackedWidget";
     // imposta il diametro del dinamometro
     m_dynamometer->setDiameter(diameterDinamometer);
     // Imposta le posizioni delle ghiere
@@ -54,17 +79,17 @@ MainWindow::MainWindow(QWidget *parent)
     m_dynamometer->setlargeTack(20,150,2,5);
     m_dynamometer->setsmallTack(10,150,2,2);
 
-    int numberRadius = (diameterDinamometer / 2) - 50;
+    int numberRadius = (diameterDinamometer / 2) - 45;
     m_dynamometer->setNumberRadius(numberRadius);
-    m_dynamometer->setInnerRing(125,4);
+    m_dynamometer->setInnerRing(113,2);
     m_dynamometer->setNeedle(45.0, Qt::yellow);
-
+    qDebug() << "fine metodi";
     // aggiornamento ghiera
-    m_dynamometer->applyUpdates();
-    setCentralWidget(stackedWidget);
-
+   m_dynamometer->applyUpdates();
+   setCentralWidget(stackedWidget);
+    qDebug() << "set widget";
     m_dynamometer->setShowNeedle(true);
-    m_dynamometer->setAngleNeedle(85);
+    m_dynamometer->setAngleNeedle(80);
     // Simulazione aggiornamento valore
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [this]() {
@@ -75,12 +100,12 @@ MainWindow::MainWindow(QWidget *parent)
         else if (value >= 60.0)
             directionMov = 1;
         if (directionMov == 1)
-            value = (value - 1);
+            value -= 5;
         if (directionMov == 0)
-            value = (value + 1);
+            value += 5;
         m_dynamometer->setAngleNeedle(value);
     });
-    timer->start(30);
+    timer->start(100);
 
     
 }

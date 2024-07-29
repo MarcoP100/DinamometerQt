@@ -15,7 +15,7 @@
 
 namespace MyProject {
 Dynamometer::Dynamometer(QWidget *parent) :
-    QWidget(parent),
+    QOpenGLWidget(parent),
     m_maxValue(50),
     m_showNeedle(false),
     m_diameter(0),
@@ -38,6 +38,13 @@ Dynamometer::Dynamometer(QWidget *parent) :
     m_outerRingRadius(0),
     m_needle(0.0,Qt::white)   {
 
+    setAttribute(Qt::WA_AlwaysStackOnTop);
+    setAttribute(Qt::WA_OpaquePaintEvent,true);
+    setAutoFillBackground(false);
+    setStyleSheet("background:transparent;");
+
+    //setFormat(QSurfaceFormat::defaultFormat());
+
     qDebug() << "Dynamometer creato";
     } // Initialize m_cacheDirty to true
 
@@ -48,8 +55,8 @@ void Dynamometer::setMaxValue(float maxValue) {
 
 void Dynamometer::setShowNeedle(bool show) {
     m_showNeedle = show;
-    m_updateNeedle = true;
-    m_cacheNeedleDirty = true;
+    m_updateNeedle = m_showNeedle;
+    m_cacheNeedleDirty = m_showNeedle;
 
     update();
 }
@@ -119,7 +126,7 @@ void Dynamometer::setAngleNeedle(float angle){
         m_needle.setAngle(angle);
         m_updateNeedle = true;
 
-        update();
+       update();
     }
 }
 
@@ -130,14 +137,35 @@ void Dynamometer::applyUpdates() {
 
 }
 
-void Dynamometer::paintEvent(QPaintEvent *event) {
-    Q_UNUSED(event);
 
+
+void Dynamometer::initializeGL() {
+    qDebug() << "initializeGL called";
+    initializeOpenGLFunctions();
+    glClearColor(0, 0, 0, 0); // Imposta il colore di sfondo trasparente
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+}
+
+
+
+void Dynamometer::paintGL() {
+
+    qDebug() << "paintGL called";
     // Inizia il timer all'inizio del metodo paintEvent
     QElapsedTimer timer;
     timer.start();
 
+    
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    
     QPainter painter(this);
+     painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+   
 
     if (m_cacheGaugeDirty) {
         generateGaugeCache();
@@ -145,15 +173,15 @@ void Dynamometer::paintEvent(QPaintEvent *event) {
         qDebug() << "Dynamometer aggiornato";
     }
 
-    if (m_updateGauge) {
+    //if (m_updateGauge) {
         // Disegna la cache della ghiera centrata nel widget
         m_updateGauge = false;
         painter.drawPixmap(0, 0, m_gaugeCache);
-    }
+    //}
 
 
 
-    // Disegna la lancetta se necessario
+   // Disegna la lancetta se necessario
     if (m_cacheNeedleDirty) {
         generateNeedleCache();
         //m_needle.draw(painter, m_outerRingRadius, m_innerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
@@ -166,7 +194,7 @@ void Dynamometer::paintEvent(QPaintEvent *event) {
         painter.translate(m_gaugeCache.width() / 2, m_gaugeCache.height() / 2);
         // Applica la rotazione in base all'angolo corrente della lancetta
         painter.rotate(m_needle.getAngle());
-        // Disegna la cache della lancetta*/
+        // Disegna la cache della lancetta
         painter.drawPixmap(-m_gaugeCache.width() / 2, -m_gaugeCache.height() / 2, m_needleCache);
         painter.restore();
     }
@@ -178,11 +206,19 @@ void Dynamometer::paintEvent(QPaintEvent *event) {
     qDebug() << "paintEvent duration:" << elapsed << "microseconds";
 }
 
+
+void Dynamometer::resizeGL(int w, int h) {
+    qDebug() << "resizeGL called";
+    //glViewport(0, 0, w, h);
+   
+}
+
 void Dynamometer::generateGaugeCache() {
     m_gaugeCache = QPixmap(size());
     m_gaugeCache.fill(Qt::transparent); // Rende la cache trasparente
 
     QPainter painter(&m_gaugeCache);
+    painter.setRenderHint(QPainter::Antialiasing, true);
 
     // Disegna la sfumatura di sfondo
     drawGradientBackground(painter);
@@ -235,26 +271,6 @@ void Dynamometer::drawGradientBackground(QPainter &painter) {
     QRect gradientRect(center.x() - radius,center.y() - radius, m_diameter, m_diameter);
     painter.drawEllipse(gradientRect);
 }
-
-/*void Dynamometer::drawNeedle(QPainter &painter) {
-    painter.save();
-
-    int side = qMin(width(), height());
-    int x = width() / 2;
-    int y = height() / 2;
-
-    painter.translate(x, y);
-    painter.rotate(180.0 * m_value / m_maxValue);
-    painter.setBrush(Qt::yellow);
-
-    static const QPoint needle[3] = {
-        QPoint(0, -10),
-        QPoint(5, 0),
-        QPoint(0, side / 2 - 10)
-    };
-    painter.drawConvexPolygon(needle, 3);
-    painter.restore();
-}*/
 
 void Dynamometer::drawTacks(QPainter &painter) {
     painter.save();
@@ -349,7 +365,7 @@ void Dynamometer::drawNumbers(QPainter &painter) {
 
     // Carica il font dall'archivio delle risorse
     int fontId = QFontDatabase::addApplicationFont(":/fonts/NotoSans-Bold.ttf");
-    const int sizeFont = 24;
+    const int sizeFont = 16;
     QFont font("Noto Sans", sizeFont);
     if (fontId == -1) {
         QMessageBox::warning(nullptr, "Warning", "Could not load font!");
@@ -390,7 +406,7 @@ void Dynamometer::drawNumbers(QPainter &painter) {
 
         // Disegna il contorno rosso
         QPainterPath path;
-        QPointF textPosition(textRect.center().x() - (textWidth / 2.0), textRect.center().y() + (sizeFont/2.0));
+        QPointF textPosition(textRect.center().x() - (textWidth / 2.0), textRect.center().y() + (sizeFont/2));
         path.addText(textPosition, font, text);
 
         QPen pen(Qt::black);
@@ -425,7 +441,7 @@ void Dynamometer::drawInternalRings(QPainter &painter){
     // Abilitare l'anti-aliasing
     ringPainter.setRenderHint(QPainter::Antialiasing, true);
 
-    /* anello esterno */
+    // anello esterno 
     m_outerRingRadius = (m_largeTackPosition - m_largeTack.getLength() - m_largeTack.getWidth());
     const float outterRingRadiusHR = m_outerRingRadius * highResFactor;
     ringPainter.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -435,7 +451,7 @@ void Dynamometer::drawInternalRings(QPainter &painter){
     ringPainter.drawEllipse(center, outterRingRadiusHR, outterRingRadiusHR);
 
 
-    /* anello interno */
+    // anello interno 
     //ringPainter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     const float innerRingRadiusHR = m_innerRingRadius * highResFactor;
     const float innerRingWidthHR = m_innerRingWidth * highResFactor;
@@ -468,7 +484,7 @@ Dynamometer::~Dynamometer() {
 
 
 
-/*************************/
+//*************************
 // tacca. solo un esercizio
 Tack::Tack(int length, int shadowTransparency, float shadowOffset, int width)
     : m_tackLength(length)
@@ -554,7 +570,7 @@ void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPoin
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     painter.translate(center);
-    painter.rotate(m_angle);
+    painter.rotate(0);
 
     QPolygonF needlePolygon;
     float B_angle = qDegreesToRadians(m_tipAngle / 2.0);
@@ -629,7 +645,7 @@ void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPoin
     drawTriangleWithGradient(leftBase, centroid, rightBase, true);
 
     // Disegna linee dagli angoli della lancetta al punto centrale
-    painter.setPen(QPen(QColor(255, 255, 0, 255), 0.3));
+    painter.setPen(QPen(Qt::black, 0.3));
     painter.drawLine(leftBase, centroid);
     painter.drawLine(tip, centroid);
     painter.drawLine(rightBase, centroid);

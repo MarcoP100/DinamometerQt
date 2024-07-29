@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "mainwindow.h"
-#include <QScreen>
+#include <QSurfaceFormat>
 
 //#include <QDebug>
 //#include <QLoggingCategory>
@@ -8,23 +8,17 @@
 
 int main(int argc, char *argv[]) {
 
-    // Imposta gli attributi prima di creare l'istanza di QApplication
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-    //QLoggingCategory::setFilterRules(QStringLiteral("qt.*=true"));
+     QApplication app(argc, argv);
 
-    
-
-    QApplication app(argc, argv);
-
-    // Imposta il DPI manualmente
-    foreach (QScreen *screen, QGuiApplication::screens()) {
-        screen->setProperty("logicalDpiX", 96);
-        screen->setProperty("logicalDpiY", 96);
-    }
+    QSurfaceFormat format;
+    format.setAlphaBufferSize(8);
+    //format.setRenderableType(QSurfaceFormat::OpenGL);
+    //format.setProfile(QSurfaceFormat::CoreProfile);
+    //format.setVersion(3, 2); // Assicurati di usare una versione di OpenGL che supporti la trasparenza
+    QSurfaceFormat::setDefaultFormat(format);
 
     MyProject::MainWindow mainWindow;
-    mainWindow.show();
-
-    return app.exec();
+     mainWindow.show();
+     return app.exec();
+    
 }

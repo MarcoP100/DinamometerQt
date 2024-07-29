@@ -38,7 +38,7 @@
                 "/project/src": "/home/marco/progettiQt/DinamometerQt/src",
                 "/project/include": "/home/marco/progettiQt/DinamometerQt/include"
             },
-            "visualizerFile": "/home/marco/.vscode-server/data/User/workspaceStorage/14a760526838ee50e9d18f72838da4b5/tonka3000.qtvsctools/qt.natvis.xml"
+            "visualizerFile": "/home/marco/.vscode-server/data/User/workspaceStorage/14a760526838ee50e9d18f72838da4b5-1/tonka3000.qtvsctools/qt.natvis.xml"
         },
         {
             "name": "Debug on WSL",
@@ -61,7 +61,7 @@
             ],
             "preLaunchTask": "Build on Wsl for debug",
             "sourceFileMap": {},
-            "visualizerFile": "/home/marco/.vscode-server/data/User/workspaceStorage/14a760526838ee50e9d18f72838da4b5/tonka3000.qtvsctools/qt.natvis.xml"
+            "visualizerFile": "/home/marco/.vscode-server/data/User/workspaceStorage/14a760526838ee50e9d18f72838da4b5-1/tonka3000.qtvsctools/qt.natvis.xml"
         }
     ]
 }

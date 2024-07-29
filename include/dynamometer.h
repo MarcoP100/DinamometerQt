@@ -4,6 +4,10 @@
 #include <QWidget>
 #include <QPixmap>
 
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+#include <QSurfaceFormat>
+
 namespace MyProject {
 
 class Dynamometer;
@@ -56,11 +60,11 @@ protected:
 
 
 // dinamometro
-class Dynamometer : public QWidget {
-    Q_OBJECT
+class Dynamometer : public QOpenGLWidget, protected QOpenGLFunctions {
+    //Q_OBJECT
 
 public:
-    explicit Dynamometer(QWidget *parent = nullptr);
+    Dynamometer(QWidget *parent = nullptr);
     void setMaxValue(float maxValue);
     void setShowNeedle(bool show);
     void setDiameter(float diameter);
@@ -81,10 +85,13 @@ public:
     ~Dynamometer();
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+   // void paintEvent(QPaintEvent *event) override;
+    void initializeGL() override;
+    void paintGL() override;
+    void resizeGL(int w, int h) override;
 
 private:
-    void drawTacks(QPainter &painter);
+   void drawTacks(QPainter &painter);
     void generateGaugeCache();
     void generateNeedleCache();
     void drawGradientBackground(QPainter &painter);

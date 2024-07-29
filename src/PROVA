@@ -1,0 +1,50 @@
+#include <QApplication>
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+#include <QPainter>
+#include <QSurfaceFormat>
+
+class TransparentOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
+public:
+    TransparentOpenGLWidget(QWidget *parent = nullptr) : QOpenGLWidget(parent) {
+        //setAttribute(Qt::WA_TranslucentBackground);
+        //setAutoFillBackground(false);
+    }
+
+protected:
+    void initializeGL() override {
+        initializeOpenGLFunctions();
+        glClearColor(0, 0, 0, 0);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    void paintGL() override {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        // Rettangolo di sfondo (non trasparente)
+        painter.setBrush(QColor(0, 255, 0)); // Verde opaco
+        painter.drawRect(0, 0, width() -200, height() - 200);
+
+        painter.setBrush(QColor(255, 0, 0, 128)); // Colore semi-trasparente
+        painter.drawRect(10, 10, width() - 100, height() - 100);
+    }
+};
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
+    QSurfaceFormat format;
+    format.setAlphaBufferSize(8);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    TransparentOpenGLWidget widget;
+    widget.setGeometry(0,0,300,300);
+    widget.resize(400, 400);
+    widget.show();
+
+    return app.exec();
+}
