@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     
     stackedWidget->addWidget(m_backgroundWidget1);
    int diameterDinamometer = 350;
-    int chromeRingWidht = 15;
+    int chromeRingWidht = 10;
     int x_centerDin = width()/2;
     int y_centerDin = height()/2;
     int x = x_centerDin - (diameterDinamometer / 2) - chromeRingWidht;
@@ -76,12 +76,12 @@ MainWindow::MainWindow(QWidget *parent)
     m_dynamometer->setStartAngle(-240.0);
     m_dynamometer->setEndAngle(60.0);
 
-    m_dynamometer->setlargeTack(20,150,2,5);
-    m_dynamometer->setsmallTack(10,150,2,2);
+    m_dynamometer->setlargeTack(12,150,2,5);
+    m_dynamometer->setsmallTack(7,150,2,2);
 
-    int numberRadius = (diameterDinamometer / 2) - 45;
+    int numberRadius = (diameterDinamometer / 2) - 38;
     m_dynamometer->setNumberRadius(numberRadius);
-    m_dynamometer->setInnerRing(113,2);
+    m_dynamometer->setInnerRing(120,2);
     m_dynamometer->setNeedle(45.0, Qt::yellow);
     qDebug() << "fine metodi";
     // aggiornamento ghiera
@@ -89,7 +89,12 @@ MainWindow::MainWindow(QWidget *parent)
    setCentralWidget(stackedWidget);
     qDebug() << "set widget";
     m_dynamometer->setShowNeedle(true);
-    m_dynamometer->setAngleNeedle(80);
+    //m_dynamometer->setAngleNeedle(0);
+
+    m_dynamometer->setNotchLenght(2);
+    m_dynamometer->setShowNotch(true);
+    //m_dynamometer->setAngleNotch(0);
+
     // Simulazione aggiornamento valore
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [this]() {
@@ -106,6 +111,23 @@ MainWindow::MainWindow(QWidget *parent)
         m_dynamometer->setAngleNeedle(value);
     });
     timer->start(100);
+
+
+    QTimer *timer2 = new QTimer(this);
+    connect(timer2, &QTimer::timeout, [this]() {
+        static int value2 = 0;
+        static int directionMov2 = 0;
+        if (value2 <= -240.0)
+            directionMov2 = 0;
+        else if (value2 >= 60.0)
+            directionMov2 = 1;
+        if (directionMov2 == 1)
+            value2 -= 2;
+        if (directionMov2 == 0)
+            value2 += 2;
+        m_dynamometer->setAngleNotch(value2);
+    });
+    timer2->start(100);
 
     
 }

@@ -13,6 +13,29 @@ namespace MyProject {
 class Dynamometer;
 class Tack;
 class Needle;
+class Notch;
+
+// classe tacca rossa
+class Notch {
+
+private:
+    float m_notchLength;
+    int m_notchTransparency;
+    float m_angle;
+
+public:
+    Notch(float length, int transparency, float angle);
+    void draw(QPainter &painter, float outerRadius, float innerRadius, QPointF center);
+
+    // Metodi di impostazione
+    void setLength_deg(float length);
+    void setTransparency(int transparency);
+    void setAngle(float angle);
+
+    int getLength_deg() const;
+    int getAngle() const;
+};
+
 
 // classe tacca
 class Tack {
@@ -67,6 +90,7 @@ public:
     Dynamometer(QWidget *parent = nullptr);
     void setMaxValue(float maxValue);
     void setShowNeedle(bool show);
+    void setShowNotch(bool show);
     void setDiameter(float diameter);
     void setPositionCenter(float x, float y);
     void setShowChromeRing(bool show);
@@ -81,6 +105,8 @@ public:
     void setInnerRing(float radius, float width);
     void setNeedle(float angle, QColor color);
     void setAngleNeedle(float angle);
+    void setAngleNotch(float angle);
+    void setNotchLenght(float lenght_kn);
     void applyUpdates();
     ~Dynamometer();
 
@@ -91,9 +117,10 @@ protected:
     void resizeGL(int w, int h) override;
 
 private:
-   void drawTacks(QPainter &painter);
+    void drawTacks(QPainter &painter);
     void generateGaugeCache();
     void generateNeedleCache();
+    void generateNotchCache();
     void drawGradientBackground(QPainter &painter);
     void drawChromeRing(QPainter &painter);
     void drawNumbers(QPainter &painter);
@@ -104,15 +131,10 @@ private:
 
 
     float m_maxValue;
-    bool m_showNeedle;
+    
     float m_diameter;         // diametro della ghiera. E' escluso l'eventuale anello esterno
     QPoint m_center;        // Centro della ghiera
-    bool m_cacheGaugeDirty;
-    bool m_cacheNeedleDirty;
-    bool m_updateGauge;
-    bool m_updateNeedle;
-    QPixmap m_gaugeCache;
-    QPixmap m_needleCache;
+    
     bool m_showChromeRing;  // abilitazione anello
     float m_chromeRingWidth;  // larghezza anello
     float m_startAngle;     // angolo inizio tacche
@@ -128,6 +150,16 @@ private:
     float m_outerRingRadius;
 
     Needle m_needle;
+    Notch m_notch;
+    bool m_showNeedle;
+    bool m_showNotch;
+
+    QPixmap m_gaugeCache;
+    QPixmap m_needleCache;
+    QPixmap m_notchCache;
+    bool m_cacheGaugeDirty;
+    bool m_cacheNeedleDirty;
+    bool m_cacheNotchDirty;
 
 };
 

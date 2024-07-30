@@ -18,11 +18,11 @@ Dynamometer::Dynamometer(QWidget *parent) :
     QOpenGLWidget(parent),
     m_maxValue(50),
     m_showNeedle(false),
+    m_showNotch(false),
     m_diameter(0),
     m_cacheGaugeDirty(true),
     m_cacheNeedleDirty(false),
-    m_updateGauge(true),
-    m_updateNeedle(false),
+    m_cacheNotchDirty(false),
     m_showChromeRing(true),
     m_chromeRingWidth(10),
     m_startAngle(0),
@@ -36,7 +36,8 @@ Dynamometer::Dynamometer(QWidget *parent) :
     m_innerRingRadius(0),
     m_innerRingWidth(0),
     m_outerRingRadius(0),
-    m_needle(0.0,Qt::white)   {
+    m_needle(0.0,Qt::white),
+    m_notch(40, 200, 0)   {
 
     setAttribute(Qt::WA_AlwaysStackOnTop);
     setAttribute(Qt::WA_OpaquePaintEvent,true);
@@ -55,8 +56,14 @@ void Dynamometer::setMaxValue(float maxValue) {
 
 void Dynamometer::setShowNeedle(bool show) {
     m_showNeedle = show;
-    m_updateNeedle = m_showNeedle;
     m_cacheNeedleDirty = m_showNeedle;
+
+    update();
+}
+
+void Dynamometer::setShowNotch(bool show) {
+    m_showNotch = show;
+    m_cacheNotchDirty = m_showNotch;
 
     update();
 }
@@ -124,15 +131,28 @@ void Dynamometer::setNeedle(float angle, QColor color){
 void Dynamometer::setAngleNeedle(float angle){
     if (m_needle.getAngle() != angle) {
         m_needle.setAngle(angle);
-        m_updateNeedle = true;
-
        update();
     }
 }
 
+void Dynamometer::setAngleNotch(float angle){
+    if (m_notch.getAngle() != angle) {
+        m_notch.setAngle(angle);
+       update();
+    }
+}
+
+void Dynamometer::setNotchLenght(float lenght_kn){
+    float temp1 = (m_endAngle - m_startAngle);
+    float temp2 =  temp1 / m_maxValue;
+    float lenght_deg = temp2 * lenght_kn;
+        m_notch.setLength_deg(lenght_deg);
+       update();
+    
+}
+
 void Dynamometer::applyUpdates() {
     m_cacheGaugeDirty = true;
-    m_updateGauge = true;
     update();
 
 }
@@ -173,14 +193,10 @@ void Dynamometer::paintGL() {
         qDebug() << "Dynamometer aggiornato";
     }
 
-    //if (m_updateGauge) {
-        // Disegna la cache della ghiera centrata nel widget
-        m_updateGauge = false;
-        painter.drawPixmap(0, 0, m_gaugeCache);
-    //}
-
-
-
+    // Disegna la cache della ghiera centrata nel widget
+    painter.drawPixmap(0, 0, m_gaugeCache);
+    
+    //****** Needle
    // Disegna la lancetta se necessario
     if (m_cacheNeedleDirty) {
         generateNeedleCache();
@@ -188,7 +204,7 @@ void Dynamometer::paintGL() {
         m_cacheNeedleDirty = false;
     }
 
-    if (m_updateNeedle) {
+    if (m_showNeedle) {
         painter.save();
         // Trasla al centro della ghiera
         painter.translate(m_gaugeCache.width() / 2, m_gaugeCache.height() / 2);
@@ -196,6 +212,25 @@ void Dynamometer::paintGL() {
         painter.rotate(m_needle.getAngle());
         // Disegna la cache della lancetta
         painter.drawPixmap(-m_gaugeCache.width() / 2, -m_gaugeCache.height() / 2, m_needleCache);
+        painter.restore();
+    }
+
+    //****** Notch
+    // Disegna la lancetta se necessario
+    if (m_cacheNotchDirty) {
+        generateNotchCache();
+        //m_needle.draw(painter, m_outerRingRadius, m_innerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
+        m_cacheNotchDirty = false;
+    }
+
+    if (m_showNotch) {
+        painter.save();
+        // Trasla al centro della ghiera
+        painter.translate(m_gaugeCache.width() / 2, m_gaugeCache.height() / 2);
+        // Applica la rotazione in base all'angolo corrente della lancetta
+        painter.rotate(m_notch.getAngle());
+        // Disegna la cache della lancetta
+        painter.drawPixmap(-m_gaugeCache.width() / 2, -m_gaugeCache.height() / 2, m_notchCache);
         painter.restore();
     }
 
@@ -241,6 +276,16 @@ void Dynamometer::generateNeedleCache() {
     QPainter painter(&m_needleCache);
     painter.setRenderHint(QPainter::Antialiasing, true);
     m_needle.draw(painter, m_outerRingRadius, m_innerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
+    
+}
+
+void Dynamometer::generateNotchCache() {
+    m_notchCache = QPixmap(m_gaugeCache.size());
+    m_notchCache.fill(Qt::transparent); // Rende la cache trasparente
+
+    QPainter painter(&m_notchCache);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    m_notch.draw(painter, (m_diameter / 2), m_outerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
     
 }
 
@@ -346,7 +391,7 @@ void Dynamometer::drawRadialGradient(QPainter &painter, const QPointF &center, f
 
 void Dynamometer::drawInnerRing(QPainter &painter, const QPointF &center, float innerRadius, int highResFactor) {
     painter.setCompositionMode(QPainter::CompositionMode_Clear);
-    const float ringWidth1 = 5 * highResFactor;
+    const float ringWidth1 = 2 * highResFactor;
     painter.setPen(QPen(Qt::black, ringWidth1));
     painter.drawEllipse(center, innerRadius, innerRadius);
 }
@@ -429,7 +474,7 @@ void Dynamometer::drawNumbers(QPainter &painter) {
 void Dynamometer::drawInternalRings(QPainter &painter){
     painter.save();
 
-    const float highResFactor = 5;  // Fattore di risoluzione più alta
+    const float highResFactor = 3;  // Fattore di risoluzione più alta
     const float highResWidth = m_gaugeCache.width() * highResFactor;
     const float highResHeight = m_gaugeCache.height() * highResFactor;
 
@@ -445,7 +490,7 @@ void Dynamometer::drawInternalRings(QPainter &painter){
     m_outerRingRadius = (m_largeTackPosition - m_largeTack.getLength() - m_largeTack.getWidth());
     const float outterRingRadiusHR = m_outerRingRadius * highResFactor;
     ringPainter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    const float ringWidth1 = 1; // Spessore del primo anello
+    const float ringWidth1 = 0.5; // Spessore del primo anello
     ringPainter.setPen(QPen(Qt::black, ringWidth1  * highResFactor));
     ringPainter.setBrush(Qt::NoBrush);
     ringPainter.drawEllipse(center, outterRingRadiusHR, outterRingRadiusHR);
@@ -653,6 +698,69 @@ void Needle::draw(QPainter &painter, float outerRadius, float innerRadius, QPoin
 
     painter.restore();
 
+}
+
+
+//tacca rossa
+Notch::Notch(float length, int transparency, float angle):
+    m_notchLength(length),
+    m_notchTransparency(transparency),
+    m_angle(angle)
+    {}
+
+void Notch::setLength_deg(float length) {
+    m_notchLength = length;
+}
+
+void Notch::setTransparency(int transparency) {
+    m_notchTransparency = transparency;
+}
+
+void Notch::setAngle(float angle) {
+    m_angle = angle;
+}
+
+int Notch::getLength_deg() const {
+    return m_angle;
+}
+
+int Notch::getAngle() const {
+    return m_angle;
+}
+
+
+
+void Notch::draw(QPainter &painter, float outerRadius, float innerRadius, QPointF center){
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    painter.translate(center);
+    painter.rotate(0);
+
+    float notchAngle_rad = qDegreesToRadians(m_notchLength / 2);
+    float centralRadius = (outerRadius - innerRadius) / 2 + innerRadius;
+    QPointF point0(innerRadius, 0);
+    QPointF pointA(outerRadius * std::cos(notchAngle_rad), outerRadius * std::sin(notchAngle_rad));
+    QPointF pointB(centralRadius * std::cos(notchAngle_rad), centralRadius * std::sin(notchAngle_rad));
+    QPointF pointC(outerRadius * std::cos(notchAngle_rad), - outerRadius * std::sin(notchAngle_rad));
+    QPointF pointD(centralRadius * std::cos(notchAngle_rad), - centralRadius * std::sin(notchAngle_rad));
+    
+    QPainterPath path;
+    
+    path.moveTo(pointC);
+    path.lineTo(pointD);
+    path.lineTo(point0);
+    path.lineTo(pointB);
+    path.lineTo(pointA);
+    path.arcTo(- outerRadius, - outerRadius, 2 * outerRadius, 2 * outerRadius, (m_notchLength / 2), - m_notchLength);
+    
+    
+
+    painter.setBrush(Qt::red);
+    painter.setPen(Qt::NoPen);
+    painter.drawPath(path);
+
+    painter.restore();
 }
 
 }
