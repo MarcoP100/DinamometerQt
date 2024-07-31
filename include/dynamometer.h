@@ -49,6 +49,7 @@ private:
 public:
     Tack(int length, int shadowTransparency, float shadowOffset, int width);
     void draw(QPainter &painter, float angle, float position);
+    
 
     // Metodi di impostazione
     void setLength(int length);
@@ -107,6 +108,8 @@ public:
     void setAngleNeedle(float angle);
     void setAngleNotch(float angle);
     void setNotchLenght(float lenght_kn);
+    void setExtraPullZone(bool enable, float lenght_kN);
+    void setHighPullZone(bool enable, float lenght_kN);
     void applyUpdates();
     ~Dynamometer();
 
@@ -127,7 +130,8 @@ private:
     void drawInternalRings(QPainter &painter);
     void drawRadialGradient(QPainter &painter, const QPointF &center, float innerRadius, float outerRadius);
     void drawInnerRing(QPainter &painter, const QPointF &center, float innerRadius, int highResFactor);
-
+    void drawExtraPullZone(QPainter &painter, float lenght_deg);
+    void drawHighPullZone(QPainter &painter, float startAngle_deg, float stopAngle_deg, float outerRadius, float innerRadius, QPointF center);
 
 
     float m_maxValue;
@@ -160,6 +164,12 @@ private:
     bool m_cacheGaugeDirty;
     bool m_cacheNeedleDirty;
     bool m_cacheNotchDirty;
+
+    bool m_enableExtraPullZone;
+    float m_ExtraPullLenght_deg;
+
+    bool m_enableHighPullZone;
+    float m_highPullLenght_deg;
 
 };
 

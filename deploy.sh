@@ -13,6 +13,7 @@ DEST_DIR="/home/display"
 EXECUTABLE="DinamometerQt"
 DEST_IP="169.254.0.2"
 DEST_USER="display"
+SERVICE_NAME="start.service"
 
 # Verifica che le variabili d'ambiente siano impostate
 if [ -z "$DEST_DIR" ] || [ -z "$EXECUTABLE" ] || [ -z "$PROJECT_DIR" ]; then
@@ -24,6 +25,8 @@ fi
 terminate_process() {
   echo "Terminating the existing process on Raspberry Pi 3..."
   ssh $DEST_USER@$DEST_IP "pkill -f '${EXECUTABLE}'" 
+  ssh $DEST_USER@$DEST_IP "sudo systemctl stop '${SERVICE_NAME}'"
+  ssh $DEST_USER@$DEST_IP "sudo systemctl disable '${SERVICE_NAME}'"
 }
 
 # Termina il processo attivo, se esiste
@@ -81,7 +84,12 @@ if [ $? -eq 0 ]; then
         if [ -f "output.log" ]; then
             mv output.log outputHistory/output-\$(date +'%Y%m%d-%H%M%S').log
         fi
+
+        
         nohup ./${EXECUTABLE} -platform eglfs > output.log 2>&1 &
+
+        sudo systemctl enable ${SERVICE_NAME}
+        sudo systemctl start ${SERVICE_NAME}
 
 EOF
 

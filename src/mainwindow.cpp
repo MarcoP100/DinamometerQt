@@ -78,10 +78,17 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_dynamometer->setlargeTack(12,150,2,5);
     m_dynamometer->setsmallTack(7,150,2,2);
+    
+
 
     int numberRadius = (diameterDinamometer / 2) - 38;
     m_dynamometer->setNumberRadius(numberRadius);
     m_dynamometer->setInnerRing(120,2);
+
+    m_dynamometer->setHighPullZone(true, 5);
+    m_dynamometer->setExtraPullZone(true, 2);
+
+    
     m_dynamometer->setNeedle(45.0, Qt::yellow);
     qDebug() << "fine metodi";
     // aggiornamento ghiera
@@ -95,14 +102,18 @@ MainWindow::MainWindow(QWidget *parent)
     m_dynamometer->setShowNotch(true);
     //m_dynamometer->setAngleNotch(0);
 
+
+
+
     // Simulazione aggiornamento valore
+    static float endMove = (60 - (-240)) / 50;
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [this]() {
         static int value = 0;
         static int directionMov = 0;
-        if (value <= -240.0)
+        if (value <= -240.0 )
             directionMov = 0;
-        else if (value >= 60.0)
+        else if (value >= (60.0 + endMove))
             directionMov = 1;
         if (directionMov == 1)
             value -= 5;
@@ -119,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent)
         static int directionMov2 = 0;
         if (value2 <= -240.0)
             directionMov2 = 0;
-        else if (value2 >= 60.0)
+        else if (value2 >= (60.0 + endMove))
             directionMov2 = 1;
         if (directionMov2 == 1)
             value2 -= 2;

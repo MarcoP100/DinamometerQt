@@ -106,6 +106,8 @@ void Dynamometer::setEndAngle(float angle) {
 
 void Dynamometer::setlargeTack(float length, float shadowTransparency, float shadowOffset, float width){
     m_largeTack = Tack(length,shadowTransparency,shadowOffset,width);
+    m_largeTackPosition = m_diameter / 2 - 5;
+    m_outerRingRadius = (m_largeTackPosition - m_largeTack.getLength() - m_largeTack.getWidth());
 
 }
 
@@ -121,6 +123,7 @@ void Dynamometer::setNumberRadius(float position) {
 void Dynamometer::setInnerRing(float radius, float width){
     m_innerRingRadius = radius;
     m_innerRingWidth = width;
+    
 }
 
 void Dynamometer::setNeedle(float angle, QColor color){
@@ -146,9 +149,20 @@ void Dynamometer::setNotchLenght(float lenght_kn){
     float temp1 = (m_endAngle - m_startAngle);
     float temp2 =  temp1 / m_maxValue;
     float lenght_deg = temp2 * lenght_kn;
-        m_notch.setLength_deg(lenght_deg);
-       update();
+    m_notch.setLength_deg(lenght_deg);
+    update();
     
+}
+
+void Dynamometer::setExtraPullZone(bool enable, float lenght_kN){
+    m_enableExtraPullZone = enable;
+    m_ExtraPullLenght_deg = (m_endAngle - m_startAngle) / m_maxValue * lenght_kN;
+}
+
+
+void Dynamometer::setHighPullZone(bool enable, float lenght_kN){
+    m_enableHighPullZone = enable;
+    m_highPullLenght_deg = (m_endAngle - m_startAngle) / m_maxValue * lenght_kN;
 }
 
 void Dynamometer::applyUpdates() {
@@ -172,7 +186,7 @@ void Dynamometer::initializeGL() {
 
 void Dynamometer::paintGL() {
 
-    qDebug() << "paintGL called";
+    //qDebug() << "paintGL called";
     // Inizia il timer all'inizio del metodo paintEvent
     QElapsedTimer timer;
     timer.start();
@@ -182,7 +196,7 @@ void Dynamometer::paintGL() {
 
     
     QPainter painter(this);
-     painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::HighQualityAntialiasing);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
    
@@ -238,13 +252,13 @@ void Dynamometer::paintGL() {
 
     // Log del tempo trascorso alla fine del metodo paintEvent
     qint64 elapsed = timer.nsecsElapsed() / 1000;
-    qDebug() << "paintEvent duration:" << elapsed << "microseconds";
+    //qDebug() << "paintEvent duration:" << elapsed << "microseconds";
 }
 
 
 void Dynamometer::resizeGL(int w, int h) {
     qDebug() << "resizeGL called";
-    //glViewport(0, 0, w, h);
+    glViewport(0, 0, w, h);
    
 }
 
@@ -259,6 +273,10 @@ void Dynamometer::generateGaugeCache() {
     drawGradientBackground(painter);
 
     //Disegna tacche e numeri
+    if (m_enableHighPullZone){
+        float startAngle_deg =  m_endAngle - m_highPullLenght_deg;
+        drawHighPullZone(painter, startAngle_deg, m_endAngle, (m_diameter / 2), m_outerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
+    }
     drawTacks(painter);
     drawNumbers(painter);
     drawInternalRings(painter);
@@ -266,6 +284,10 @@ void Dynamometer::generateGaugeCache() {
     if (m_showChromeRing) {
         drawChromeRing(painter);
     }
+    if (m_enableExtraPullZone){
+        drawExtraPullZone(painter, m_ExtraPullLenght_deg);
+    }
+    
     
 }
 
@@ -323,7 +345,7 @@ void Dynamometer::drawTacks(QPainter &painter) {
 
     const float x = m_gaugeCache.width() / 2;
     const float y = m_gaugeCache.height() / 2;
-    m_largeTackPosition = m_diameter / 2 - 5;
+    
 
     // Calcola l'angolo incrementale tra le tacche
     const float largeTackIncrement  = (m_endAngle - m_startAngle) / (m_largeTacksCount - 1);
@@ -346,6 +368,54 @@ void Dynamometer::drawTacks(QPainter &painter) {
 
     painter.restore();
 }
+
+void Dynamometer::drawExtraPullZone(QPainter &painter, float lenght_deg) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    const float x = m_gaugeCache.width() / 2;
+    const float y = m_gaugeCache.height() / 2;
+    painter.translate(x, y);
+
+    float TackAngle = m_endAngle + lenght_deg;
+    m_largeTack.draw(painter, TackAngle, m_largeTackPosition); 
+    painter.restore();
+}
+
+void Dynamometer::drawHighPullZone(QPainter &painter, float startAngle_deg, float stopAngle_deg, float outerRadius, float innerRadius, QPointF center){
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.translate(center);
+    painter.rotate(0);
+
+    float startAngle_rad = qDegreesToRadians(startAngle_deg);
+    float stopAngle_rad = qDegreesToRadians(stopAngle_deg);
+    float lenghtAngle_deg = stopAngle_deg - startAngle_deg;
+    QPointF pointA(outerRadius * std::cos(startAngle_rad), outerRadius * std::sin(startAngle_rad));
+    QPointF pointB(innerRadius * std::cos(startAngle_rad), innerRadius * std::sin(startAngle_rad));
+    QPointF pointC(outerRadius * std::cos(stopAngle_rad), outerRadius * std::sin(stopAngle_rad));
+    
+    QPainterPath path;
+    
+    path.moveTo(pointA);
+    path.lineTo(pointB);
+    path.arcTo(- innerRadius, - innerRadius, 2 * innerRadius, 2 * innerRadius, - startAngle_deg,- lenghtAngle_deg);
+    path.lineTo(pointC);
+    path.arcTo(- outerRadius, - outerRadius, 2 * outerRadius, 2 * outerRadius, - stopAngle_deg, lenghtAngle_deg);    
+    
+    // Definisci il gradiente conico
+    QConicalGradient conicalGradient(center, startAngle_deg);
+    conicalGradient.setColorAt(0.0, QColor(255, 0, 0,100));
+    conicalGradient.setColorAt((0.2), QColor(255, 0, 0,255));
+
+    painter.setBrush(conicalGradient);
+    painter.setPen(Qt::NoPen);
+    painter.drawPath(path);
+
+    painter.restore();
+}
+
+
+
 
 
 
@@ -518,6 +588,7 @@ void Dynamometer::drawInternalRings(QPainter &painter){
 
 }
 
+
 Dynamometer::~Dynamometer() {
 
     // Dealloca le risorse qui, se necessario
@@ -584,6 +655,7 @@ void Tack::draw(QPainter &painter, float angle, float position) {
     painter.setPen(QPen(gradient, m_tackWidth));
     painter.drawLine(QPointF(x1, y1), QPointF(x2, y2));
 }
+
 
 //lancetta
 Needle::Needle(float angle, QColor color):
@@ -756,7 +828,7 @@ void Notch::draw(QPainter &painter, float outerRadius, float innerRadius, QPoint
     
     
 
-    painter.setBrush(Qt::red);
+    painter.setBrush(QColor(255, 0, 0, 210));
     painter.setPen(Qt::NoPen);
     painter.drawPath(path);
 
