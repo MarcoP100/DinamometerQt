@@ -130,7 +130,7 @@ private:
     void drawInternalRings(QPainter &painter);
     void drawRadialGradient(QPainter &painter, const QPointF &center, float innerRadius, float outerRadius);
     void drawInnerRing(QPainter &painter, const QPointF &center, float innerRadius, int highResFactor);
-    void drawExtraPullZone(QPainter &painter, float lenght_deg);
+    void drawExtraPullZone(QPainter &painter, float lenght_deg, float endAngle_deg, float outerRadius, float innerRadius, QPointF center);
     void drawHighPullZone(QPainter &painter, float startAngle_deg, float stopAngle_deg, float outerRadius, float innerRadius, QPointF center);
 
 

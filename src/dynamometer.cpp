@@ -271,7 +271,9 @@ void Dynamometer::generateGaugeCache() {
 
     // Disegna la sfumatura di sfondo
     drawGradientBackground(painter);
-
+    if (m_enableExtraPullZone){
+        drawExtraPullZone(painter, m_ExtraPullLenght_deg, m_endAngle, (m_diameter / 2), m_outerRingRadius, QPointF (m_gaugeCache.width()/2, m_gaugeCache.height()/2));
+    }
     //Disegna tacche e numeri
     if (m_enableHighPullZone){
         float startAngle_deg =  m_endAngle - m_highPullLenght_deg;
@@ -284,9 +286,7 @@ void Dynamometer::generateGaugeCache() {
     if (m_showChromeRing) {
         drawChromeRing(painter);
     }
-    if (m_enableExtraPullZone){
-        drawExtraPullZone(painter, m_ExtraPullLenght_deg);
-    }
+    
     
     
 }
@@ -369,15 +369,37 @@ void Dynamometer::drawTacks(QPainter &painter) {
     painter.restore();
 }
 
-void Dynamometer::drawExtraPullZone(QPainter &painter, float lenght_deg) {
+void Dynamometer::drawExtraPullZone(QPainter &painter, float lenght_deg, float endAngle_deg, float outerRadius, float innerRadius, QPointF center) {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
-    const float x = m_gaugeCache.width() / 2;
-    const float y = m_gaugeCache.height() / 2;
-    painter.translate(x, y);
+    painter.translate(center);
+    painter.rotate(0);
+    float TackAngle_deg = endAngle_deg + lenght_deg;
+    // coloro la zona di rosso
+    float startAngle_deg = endAngle_deg;
+    float stopAngle_deg = TackAngle_deg;
 
-    float TackAngle = m_endAngle + lenght_deg;
-    m_largeTack.draw(painter, TackAngle, m_largeTackPosition); 
+    float startAngle_rad = qDegreesToRadians(endAngle_deg);
+    float stopAngle_rad = qDegreesToRadians(TackAngle_deg);
+    QPointF pointA(outerRadius * std::cos(startAngle_rad), outerRadius * std::sin(startAngle_rad));
+    QPointF pointB(innerRadius * std::cos(startAngle_rad), innerRadius * std::sin(startAngle_rad));
+    QPointF pointC(outerRadius * std::cos(stopAngle_rad), outerRadius * std::sin(stopAngle_rad));
+    
+    QPainterPath path;
+    
+    path.moveTo(pointA);
+    path.lineTo(pointB);
+    path.arcTo(- innerRadius, - innerRadius, 2 * innerRadius, 2 * innerRadius, - startAngle_deg,- lenght_deg);
+    path.lineTo(pointC);
+    path.arcTo(- outerRadius, - outerRadius, 2 * outerRadius, 2 * outerRadius, - stopAngle_deg, lenght_deg);    
+ 
+    painter.setBrush(QColor(Qt::red));
+    painter.setPen(Qt::NoPen);
+    painter.drawPath(path);
+
+    //disegno la tacca
+    m_largeTack.draw(painter, TackAngle_deg, m_largeTackPosition); 
+
     painter.restore();
 }
 
@@ -403,14 +425,15 @@ void Dynamometer::drawHighPullZone(QPainter &painter, float startAngle_deg, floa
     path.arcTo(- outerRadius, - outerRadius, 2 * outerRadius, 2 * outerRadius, - stopAngle_deg, lenghtAngle_deg);    
     
     // Definisci il gradiente conico
-    QConicalGradient conicalGradient(center, startAngle_deg);
-    conicalGradient.setColorAt(0.0, QColor(255, 0, 0,100));
-    conicalGradient.setColorAt((0.2), QColor(255, 0, 0,255));
-
-    painter.setBrush(conicalGradient);
+    QConicalGradient conicalGradient(QPointF(0, 0), - stopAngle_deg);
+    float endGradient = lenghtAngle_deg / 360.0;
+    conicalGradient.setColorAt(0.0, QColor(255, 0, 0, 255));
+    conicalGradient.setColorAt(endGradient, QColor(255, 0, 0, 50));
+    
+    //painter.setBrush(conicalGradient);
+    painter.fillPath(path, conicalGradient);
     painter.setPen(Qt::NoPen);
-    painter.drawPath(path);
-
+    
     painter.restore();
 }
 
